@@ -1,0 +1,7 @@
+- name: "get date"
+  raw: 'date +"%Y-%m-%d %H:%M:%S"'
+  register: res_datetime
+  changed_when: false
+
+- name: "print datetime"
+  debug: msg="{{ res_datetime.stdout_lines[0] }}"

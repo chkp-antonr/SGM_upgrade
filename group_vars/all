@@ -1,0 +1,44 @@
+---
+# General settings
+ansible_ssh_common_args: '-o ServerAliveInterval=5 -o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null -oKexAlgorithms=+diffie-hellman-group-exchange-sha1,diffie-hellman-group14-sha1 -oHostKeyAlgorithms=+ssh-rsa,ssh-dss'
+ansible_ssh_timeout: 60
+ansible_python_interpreter: "/opt/CPsuite-R8*/fw1/Python/bin/python"
+ansible_user: ansible
+wait_for_reboot_timeout: 3600
+loglevel: 3 # 0 - silent; 1 - normal; 2 - print timestamps and some more; 3 - max
+
+# credentials
+default_admin_user: admin # z..1
+default_admin_pass: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          35313130613834383938366435316236363232353163313731653630633061666632373631386437
+          3837616334616164396261663561633263326466656438360a313962316535366665616238393261
+          65663566303863363437626635306633326361366139343232323266656434313632303763396438
+          3762343665316333340a623564396630386337653533323234653438656661613561336563363731
+          3766
+ansible_ssh_user: ansible
+ansible_ssh_pass: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          35313130613834383938366435316236363232353163313731653630633061666632373631386437
+          3837616334616164396261663561633263326466656438360a313962316535366665616238393261
+          65663566303863363437626635306633326361366139343232323266656434313632303763396438
+          3762343665316333340a623564396630386337653533323234653438656661613561336563363731
+          3766
+ansible_ssh_hash: $1$mTrsDtEW$U9Y4uIVwvxFwEYtSlXaKr0
+
+# Universal Clish Config
+timezone_set: '"Asia / Jerusalem"'
+timezone_get: "Asia/Jerusalem"
+dns_primary: 194.29.36.217
+dns_secondary: 194.29.36.86
+ntp_primary: 172.23.23.168
+ntp_primary_version: 2
+inactivity_timeout: "600"
+
+# Repo with hotfixes
+local_repo: /tmp/Upgrade
+remote_repo: http://172.23.23.168/CHKP
+pre_upgrade_verifier: pre_upgrade_verifier.sh
+# jhf_R8030SP: Check_Point_R80_30SP_JHF_MAIN_Bundle_T97_FULL.tgz
+# da_R8030_R81SP: DeploymentAgent_R80.30SP_000000027_1.tgz
+# pkg_upgrade_R81: Check_Point_R81.10_T338_ScalablePlatform_Upgrade.tar

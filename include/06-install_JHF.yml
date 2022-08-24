@@ -1,0 +1,267 @@
+- name: "get SMO_IP"
+  shell: hostname -i
+  register: res
+  changed_when: false
+
+- name: "Store SMO_IP"
+  set_fact:
+    smo_ip: "{{ res.stdout }}"
+
+
+# Let's switch to the proper SMO first
+
+  # "Attention! In case image auto-clone is enabled, this operation may be overridden by auto-cloning from SMO during next boot."
+  # "To disable image auto-clone run: set smo image auto-clone state off",
+  # ! get `show smo image auto-clone state`
+
+- name: "clusterXL down for the logical group"
+  delegate_to: 127.0.0.1
+  expect:
+    command: "ssh -t ansible@{{ inventory_hostname }} g_clusterXL_admin -b {{ logical_range }} down"
+    responses:
+      'password': "{{ ansible_ssh_pass }}"
+      'Are you sure': "y"
+      'Enter your full name:': 'Ansible'
+      'Enter reason for': "Automated Upgrade"
+  register: res
+  ignore_errors: true
+  ignore_unreachable: true
+
+- name: "Debug / clusterXL down"
+  debug: msg="{{ res.stdout_lines }}"
+  ignore_errors: true
+  when: loglevel>1
+
+- name: Establish new connection (in case of SMO switch)
+  # switch on g_clusterXL down for group A
+  wait_for_connection:
+    timeout: 600
+  register: res
+  ignore_unreachable: true
+  ignore_errors: true
+
+- name: "get SMO_IP"
+  shell: hostname -i
+  register: res
+  changed_when: false
+  ignore_unreachable: true
+
+- name: "Store SMO_IP"
+  set_fact:
+    smo_ip: "{{ res.stdout }}"
+
+- name: "Debug / SMO_IP just before JHF install"
+  debug:
+    msg: "{{ smo_ip }}"
+  ignore_errors: true
+  when: loglevel>1
+
+
+### Import package
+
+- name: "Debug / Prepare to import package"
+  debug:
+    msg:
+      - "Prepare to import package {{ jhf_R80 }}"
+      - "on {{ smo_ip }} for range {{ logical_range }}"
+  when: loglevel>0
+
+- name: "Timestamp / Start importing package"
+  include_tasks: ./include/print_datetime.yml
+  when: loglevel>=2
+
+- name: "Import package"
+  include_tasks: include/import_package.yml
+  vars:
+    package_name: "{{ jhf_R80 }}"
+
+- name: "Show imported packages"
+  shell: gclish -c "show installer packages imported"
+  register: res
+  changed_when: false
+
+- name: "Debug / Show imported packages"
+  debug: msg="{{ res.stdout_lines }}"
+  when: loglevel>=2
+
+# ! Find package index
+
+- name: "Timestamp / After importing package"
+  include_tasks: ./include/print_datetime.yml
+  when: loglevel>=2
+
+
+### Verify
+
+- name: "set range for Verify installer for the second run"
+  set_fact:
+    verify_range: "member_ids {{ logical_range }}"
+  when: not is_first|bool
+
+- name: "Verify installer"
+  # no member_ids (check all members) for the first run
+  shell: gclish -c "installer verify 1 {{ verify_range|default('') }}" | tail -15
+  register: res_verify
+  changed_when: false
+  ignore_errors: true
+
+- name: "Timestamp / installer verified"
+  include_tasks: ./include/print_datetime.yml
+  when: loglevel>=3
+
+- name: "Check if all required SGMs allowed"
+  shell: "echo {{ res_verify.stdout_lines }} | grep -v -i 'not'"
+  register: res
+  changed_when: false
+  ignore_errors: true
+
+- name: "Verify installer failed - break!"
+  fail:
+    msg:
+      - "Oops. Already installed? Not in sync? Break installation."
+      - "{{ res_verify.stdout_lines }}"
+  when: res.rc == 1
+  # ! Need better error handling ?
+
+- name: "Debug / Verify installer - OK"
+  debug:
+    msg: "{{ res_verify.stdout_lines }}"
+  when: res.rc == 0
+
+
+### Start installation
+
+# - name: "Install JHF on B"
+#   # ! 1 to replace with the calculated number of the package
+#   delegate_to: 127.0.0.1
+#   expect:
+#     command: 'ssh -t ansible@{{ inventory_hostname }} gclish -c \"installer install 1 member_ids {{ logical_range }}\"'
+#     responses:
+#       'password': "{{ ansible_ssh_pass }}"
+#       'Do you want to continue': "y"
+#       'Are you sure': "y"
+#       'You are about to perform': "y"
+#       'Enter your full name:': 'Ansible'
+#       'Enter reason for': "Automated Upgrade"
+#   register: res
+#   ignore_errors: true
+#   ignore_unreachable: true
+#   when: is_first|bool
+
+# - name: "Install JHF on A"
+#   # ! 1 to replace with the calculated number of the package
+#   delegate_to: 127.0.0.1
+#   expect:
+#     command: 'ssh -t ansible@{{ inventory_hostname }} member {{ logicalAmember }}'
+#     responses:
+#       'password': "{{ ansible_ssh_pass }}"
+#       '\:0]#': "gclish -c \"installer install 1 member_ids {{ logical_range }}\""
+#       'Do you want to continue': "y"
+#       'Are you sure': "y"
+#       'You are about to perform': "y"
+#       'Enter your full name:': 'Ansible'
+#       'Enter reason for': "Automated Upgrade"
+#   register: res
+#   ignore_errors: true
+#   ignore_unreachable: true
+#   when: not is_first|bool
+
+- name: "Install JHF by switching to the affected member"
+  # ! 1 to replace with the calculated number of the package
+  delegate_to: 127.0.0.1
+  expect:
+    command: 'ssh -t ansible@{{ inventory_hostname }} member {{ logical_member }}'
+    responses:
+      'password': "{{ ansible_ssh_pass }}"
+      '\:0]#': "gclish -c \"installer install 1 member_ids {{ logical_range }}\""
+      'Do you want to continue': "y"
+      'Are you sure': "y"
+      'You are about to perform': "y"
+      'Enter your full name:': 'Ansible'
+      'Enter reason for': "Automated Upgrade"
+  register: res
+  ignore_errors: true
+  ignore_unreachable: true
+
+
+# ! Check for "Package index doesn't exist on the local member ('1')"
+
+- name: "Debug / JHF install in progress"
+  debug:
+    msg:
+      - "JHF install in progress on {{ logical_range }} from {{ smo_ip }}"
+  ignore_errors: true
+  when: loglevel>0
+
+- name: "Returned from install, start waiting for reboot"
+  include_tasks: ./include/print_datetime.yml
+  when: loglevel>=2
+
+
+  # upgrade of the logicalA (with SMO) causes disconnect.
+  # maybe two disconnects (SMO switches to B and then back)
+
+  # wait for asg stat -i sgm_info all ACTIVE (Inactive disappeared) or disconnected
+  # watch -n 5 "asg stat -i proc | grep -A 5 'SGM ID'"
+  # Maybe count `asg stat -i active_ids`
+  # ! Add timeout to the loop !
+
+- name: Establish new connection (in case of SMO switch)
+  wait_for_connection:
+    timeout: 600
+  register: res
+  ignore_unreachable: true
+  ignore_errors: true
+
+- name: "get SMO_IP"
+  shell: hostname -i
+  register: res
+  changed_when: false
+  ignore_unreachable: true
+  ignore_errors: true
+
+- name: "Debug / SMO_IP before waiting for all active"
+  debug:
+    msg: "{{ res.stdout }}"
+  ignore_errors: true
+  when: loglevel>0
+
+- name: "Wait for all Active"
+  shell: while [ $(asg stat -i sgm_info | grep -c Inactive) -ne 0 ]; do printf "."; sleep 10; done
+  changed_when: false
+  ignore_errors: true
+  ignore_unreachable: true
+  register: res
+  # ! Normal return or disconnect first?
+
+- name: "Debug / Return from waiting reboot"
+  debug:
+    msg:
+      - "Rebooted and all active, range {{ logical_range }}"
+      - "{{ res }}"
+  ignore_errors: true
+  when: loglevel>1
+
+- name: Establish new connection (in case of SMO switch)
+  wait_for_connection:
+    timeout: 600
+  register: res
+  ignore_unreachable: true
+  ignore_errors: true
+
+- name: "get SMO_IP"
+  shell: hostname -i
+  register: res
+  changed_when: false
+  ignore_unreachable: true
+  ignore_errors: true
+
+- name: "Debug / SMO_IP after all active"
+  debug:
+    msg: "{{ res }}"
+  when: loglevel>1
+  ignore_errors: true
+
+- name: "Reboot completed"
+  include_tasks: ./include/print_datetime.yml
+  when: loglevel>=2

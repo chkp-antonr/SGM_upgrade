@@ -1,0 +1,8 @@
+
+[mds]
+192.168.168.140
+
+# We upgrade host "sg", its specifica variables (domain, policy package...) are in group_vars/sg
+[sg]
+172.23.23.29
+# ansible_ssh_user=admin ansible_ssh_pass=

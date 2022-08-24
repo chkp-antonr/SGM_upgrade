@@ -1,0 +1,61 @@
+---
+- name: "Minor fixes if needed"
+  gather_facts: false
+  hosts: sg
+
+  tasks:
+
+### Fix sftp Subsystem
+
+    #  sed -i 's|^#Subsystem.*sftp.*|Subsystem      sftp    /usr/libexec/openssh/sftp-server|g' /etc/ssh/sshd_config; service sshd reload
+    - name: "Fix sshd_config"
+      # `lineinfile` is for a single member, need g_all
+      raw: g_all -a "sed -i 's|^#Subsystem.*sftp.*|Subsystem sftp /usr/libexec/openssh/sftp-server|g' /etc/ssh/sshd_config"
+      register: res
+      changed_when: false
+
+    - name: "Validate sshd_config"
+      raw: g_all -a "grep Subsystem /etc/ssh/sshd_config"
+      register: res
+      changed_when: false
+
+    - name: "Debug / sshd_config"
+      debug: msg="{{ res.stdout }}"
+      when: loglevel>=1
+
+    - name: "Restart sshd"  # Doesn't work without reboot?
+      raw: g_all -a "service sshd reload"
+      register: res
+
+    # - name: "Stop sshd"
+    #   raw: g_all -a pkill -f "sshd"; g_all -a "service sshd start";
+    #   changed_when: false
+
+    - name: New SSH session
+      meta: reset_connection
+
+    - name: "get SMO_IP"
+      shell: hostname -i
+      register: res
+      changed_when: false
+      ignore_unreachable: true
+
+    - name: "Debug / SMO_IP"
+      debug:
+        msg: "{{ res.stdout_lines }}"
+      ignore_errors: true
+      when: loglevel>1
+
+    - name: "remove coredumps if exist"
+      raw: g_all -a rm /var/log/dump/usermode/*
+      changed_when: false
+
+    - name: "fix trailing spaces in cp-release" # not needed in most cases
+      raw: g_all -a "sed -i 's/[ \t]*$//' /etc/cp-release"
+      changed_when: false
+
+
+  # core_dump_verifier -a  - verifies also blades in "down" state
+  # core_dump_verifier -v  - verifies no cores were dumped
+  # core_dump_verifier -c  - deletes all usermode core dump files
+  # core_dump_verifier -k  - deletes all kernel core dump files
