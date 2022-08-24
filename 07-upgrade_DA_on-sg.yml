@@ -1,0 +1,27 @@
+---
+# https://sc1.checkpoint.com/documents/R81.10/WebAdminGuides/EN/CP_R81.10_Maestro_AdminGuide/Topics-Maestro-AG/Upgrading-Maestro-with-CPUSE.htm?tocpath=Upgrading%20Maestro%20to%20R81.10%7C_____1
+- name: "Step 7 - Upgrade the CPUSE Deployment Agent on the Security Group"
+  hosts: sg
+  gather_facts: false
+
+  tasks:
+
+
+### Update DA
+
+    - name: "Update Deployment Agent"
+      shell: update_sp_da "{{ local_repo }}/{{ da_R80 }}"
+      register: res
+      changed_when: false
+
+    - name: "Debug / Update Deployment Agent"
+      debug: msg="{{ res.stdout_lines }}"
+
+    - name: "Deployment Agent status build"
+      shell: gclish -c "show installer status build"
+      register: res_status
+      ignore_errors: true
+      changed_when: false
+
+    - name: "Debug / Deployment Agent status build"
+      debug: msg="{{ res_status.stdout_lines }}"

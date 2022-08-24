@@ -1,0 +1,36 @@
+
+PLAY [Step 7 - Upgrade the CPUSE Deployment Agent on the Security Group] *******
+
+TASK [Update Deployment Agent] *************************************************
+ok: [172.23.23.29]
+
+TASK [Debug / Update Deployment Agent] *****************************************
+ok: [172.23.23.29] => {
+    "msg": [
+        "[1_01]Installing DA Package...",
+        "[1_02]Installing DA Package...",
+        "[1_01]Member 1_1 finished updating DA",
+        "[1_02]Member 1_2 finished updating DA"
+    ]
+}
+
+TASK [Deployment Agent status build] *******************************************
+ok: [172.23.23.29]
+
+TASK [Debug / Deployment Agent status build] ***********************************
+ok: [172.23.23.29] => {
+    "msg": [
+        "",
+        "Querying cluster members...",
+        "",
+        "1_01:",
+        "Build number: 27 (agent build is up to date)",
+        "",
+        "1_02:",
+        "Build number: 27 (agent build is up to date)"
+    ]
+}
+
+PLAY RECAP *********************************************************************
+172.23.23.29               : ok=4    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
