@@ -1,0 +1,70 @@
+---
+# Step 11, 12 - Edit the Security Gateway object version, install policy
+- name: "Get policy from SMO"
+  gather_facts: false
+  hosts: sg
+
+  tasks:
+
+    - name: "Get policy name"
+      shell: "set -o pipefail && fw stat | tail -1 | awk '{ print $2 }'"
+      register: policy_name
+      changed_when: false
+
+    - name: "Set policy name"
+      set_fact:
+        policy_name: "{{ policy_name.stdout }}"
+
+
+- name: "Step 11, 12 - Edit the Security Gateway object version, install policy"
+  hosts: mds
+  gather_facts: false
+
+  tasks:
+
+    - name: "Set policy name"
+      set_fact:
+        policy_name: "{{ hostvars[groups.sg[0]]['policy_name'] }}"
+
+    - name: "Set domain name"
+      set_fact:
+        domain_name: "{{ hostvars[groups.sg[0]]['domain_name'] }}"
+
+    - name: "Set gateway name"
+      set_fact:
+        gw_name: "{{ hostvars[groups.sg[0]]['gw_name'] }}"
+
+    - name: "Debug / Names"
+      debug: msg="{{ policy_name }} @ {{ gw_name }} in {{ domain_name }}"
+      ignore_errors: true
+      when: loglevel>0
+
+    # - name: "Temporary stop"
+    #   meta: end_play
+
+# ! search for GW_NAME based on SMO ip, DMN, and fetch PACKAGE_NAME from GW
+
+    - name: "Change gw version"
+      shell: >
+        mgmt_cli -u "{{ gui_user }}" -p "{{ gui_pass }}" --format json -d "{{ domain_name }}"
+        set simple-gateway name "{{ gw_name }}" version 'R81.10'
+      changed_when: false
+
+    - name: "Publish"
+      shell: >
+        mgmt_cli -u "{{ gui_user }}" -p "{{ gui_pass }}" --format json -d "{{ domain_name }}"
+        publish
+      changed_when: false
+      register: res
+
+    - name: "Prepare policy for install"
+      raw: >
+        mgmt_cli -u "{{ gui_user }}" -p "{{ gui_pass }}" --format json -d "{{ domain_name }}"
+        install-policy policy-package "{{ policy_name }}" --sync false targets "{{ gw_name }}" prepare-only true
+      changed_when: false
+      register: res
+
+    - name: "Debug / "
+      debug: msg="Policy prepared {{ res.stdout_lines }}"
+      ignore_errors: true
+      when: loglevel>1
