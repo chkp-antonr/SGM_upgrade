@@ -8,6 +8,11 @@
 
 
 ### Update DA
+    - name: "Step 7 - Download Deployment Agent to local repo"
+      get_url:
+        url: "{{ remote_repo }}/{{ da_R80 }}"
+        dest: "{{ local_repo }}"
+        mode: 0644
 
     - name: "Step 7 - Update Deployment Agent"
       shell: update_sp_da "{{ local_repo }}/{{ da_R80 }}"

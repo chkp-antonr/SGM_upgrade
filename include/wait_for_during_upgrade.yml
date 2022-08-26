@@ -1,0 +1,74 @@
+- name: "debug before waiting"
+  block:
+    - name: "get SMO_IP"
+      shell: hostname -i
+      register: res_smo_ip
+      changed_when: false
+
+    - name: "Check cphaprob"
+      shell: |
+        asg stat -i all_ids
+        g_all -a cphaprob state | grep "Active PNOTEs"
+        asg stat -i proc | egrep "DOWN|DETACHED"
+        g_all -a cphaprob state | grep "FSYNC, during_upgrade"
+      ignore_errors: true
+      ignore_unreachable: true
+      register: res
+      changed_when: false
+    - name: "Debug / Check cphaprob"
+      debug:
+        msg:
+          - "{{ item }} iteration (before), SMO_IP {{ res_smo_ip.stdout_lines }}"
+          - "{{ res.stdout_lines }}"
+  when: loglevel>=3
+
+- name: "Wait for all upgraded PNOTEs have state FSYNC, during_upgrade"
+  shell: |
+    while [ $(asg stat -i all_ids | wc -l) -ne \
+      $(g_all -a cphaprob state | grep "Active PNOTEs" | wc -l) ] || \
+      [ $(asg stat -i proc | egrep -c "DOWN|DETACHED") -ne \
+      $(g_all -a cphaprob state | grep -c "FSYNC, during_upgrade") ]; \
+    do
+      printf "."; sleep 10;
+    done
+  changed_when: false
+  ignore_errors: true
+  ignore_unreachable: true
+  register: res
+
+- name: Establish new connection (in case of SMO switch)
+  wait_for_connection:
+    timeout: 300
+  register: res
+  ignore_unreachable: true
+  ignore_errors: true
+
+- name: "debug after waiting"
+  block:
+    - name: "get SMO_IP"
+      shell: hostname -i
+      register: res_smo_ip
+      changed_when: false
+
+    - name: "Check cphaprob"
+      shell: |
+        asg stat -i all_ids
+        g_all -a cphaprob state | grep "Active PNOTEs"
+        asg stat -i proc | egrep "DOWN|DETACHED"
+        g_all -a cphaprob state | grep "FSYNC, during_upgrade"
+      ignore_errors: true
+      ignore_unreachable: true
+      register: res
+      changed_when: false
+    - name: "Debug / Check cphaprob"
+      debug:
+        msg:
+          - "{{ item }} iteration (after), SMO_IP {{ res_smo_ip.stdout_lines }}"
+          - "{{ res.stdout_lines }}"
+  when: loglevel>=3
+
+# g_all -a cphaprob state | grep "Active PNOTE"
+# Active PNOTEs: FSYNC, AMW, during_upgrade - too early
+# Active PNOTEs: FSYNC, during_upgrade - wait for this
+# Number of responded SGMs: g_all -a cphaprob state | grep "Active PNOTEs" | wc -l
+# Number of SGMs (must be equal): asg stat -i all_ids | wc -l

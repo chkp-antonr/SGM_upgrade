@@ -17,22 +17,40 @@
           'When done, enter': "y"
           'Are you sure': "y"
           'You are about to perform': "y"
-          'Enter your full name:': 'Ansible'
+          'Enter your full name': "Ansible"
           'Enter reason for': "Automated Upgrade"
+          'did not perform the upgrade yet': "n"
+        # timeout: 300
+        echo: true
       register: res
       ignore_errors: true
       ignore_unreachable: true
-# sp_upgarde is expected to be disconnected, though there is N to --continue for B
+# sp_upgrade is expected to be disconnected,
+# or answer N for
+# 'Security Group Members 1_2 did not perform the upgrade yet. Upgrade all Security Group Members and then continue..'
+# after upgrading B return to A and --continue
+# Active PNOTEs: LACP_SYNC, then ACTIVE
 
-    - name: "Debug / Installed on A"
+    - name: "Debug / After sp_upgrade on A"
       debug: msg="{{ res }}"
       when: loglevel>=3
 
-    - name: "Timestamp / Installed on A"
+# ! waiting FSYNC, during_upgrade for local on A
+
+    - name: "Wait for FSYNC, during_upgrade on local member A"
+      shell: |
+        while [ $(asg stat -i proc | egrep -c "DOWN|DETACHED") -ne \
+        $(g_all -a cphaprob state | grep -c "FSYNC, during_upgrade") ];    do
+          printf "."; sleep 10;
+        done
+      changed_when: false
+      ignore_errors: true
+      ignore_unreachable: true
+      register: res
+
+    - name: "Timestamp / After sp_upgrade on A"
       include_tasks: ./include/print_datetime.yml
       when: loglevel>=2
-
-
 
 # member 1_1
 
@@ -130,3 +148,88 @@
 #    State change:               DOWN -> ACTIVE
 #    Reason for state change:    Member is now fully operational as part of Load Sharing ClusterXL
 #    Event time:                 Fri Aug 26 09:42:37 2022
+
+#####
+
+# Existing connections will be closed and re-established.
+
+# Are you sure
+
+
+
+###
+
+# [Expert@cti-ch01-01:0]# sp_upgrade
+
+# Note: Detected a previous run of the upgrade procedure.
+# To continue from the last successful step, run: sp_upgrade --continue
+# You are about to perform upgrade procedure on blades: 1_1
+# This will make you lose the previously saved step.
+
+# Are you sure? (Y - yes, any other key - no) y
+
+# Upgrade procedure requires auditing
+# Enter your full name: A
+# Enter reason for upgrade procedure [Upgrade]:
+# WARNING: Upgrade procedure on blades: 1_1, User: A, Reason: Upgrade
+
+# R81.10 Upgrade is in progress on these Security Group Members: 1_1
+
+# Attention: Reboot or policy installation is not allowed during the upgrade (unless the 'sp_upgrade' script tells you to do so). Do not perform these actions until the 'sp_upgrade' script completes its tasks successfully.
+
+# Change the Security Gateway object version to R81.10 -
+# (1) Connect with SmartConsole to the Management Server
+# (2) Open the Security Gateway object for this Security Group
+# (3) In the 'Version' field, select R81.10
+# (4) Click OK
+# (5) Publish the session (do not install the policy).
+# When done, enter 'y' or "yes"(enter 'n' or "no" to exit): y
+
+# Run this API command on the Management Server CLI to prepare the new policy:
+# (Enter the applicable values in the <Policy_Name> and <Security_Gateway_Object_Name>. On a Multi-Domain Server, replace 'SMC User' with the name or IP of the Domain Management Server that manages this VSX Gateway)
+#  "mgmt_cli -d 'SMC User' --format json install-policy policy-package <Policy_Name> --sync false targets <Security_Gateway_Object_Name> prepare-only true".
+# When done, enter 'y' or "yes"(enter 'n' or "no" to exit): y
+
+# Fetching the policy from the Management Server and installing it... Succeeded
+# The Anti-Malware (AMW) policy for this Gateway or current VS context, does not exist on the Management Server - skipping the AMW policy fetch.
+
+# About to perform a cluster failover between the Security Group Members.
+#  - These Security Group Members will change their state to DOWN: 1_2
+#  - These Security Group Members will change their state to ACTIVE: 1_1
+# You are about to perform Failover action between Security Group Members on blades: all
+# Changing the state of these Security Group Members to DOWN: 1_2. This will trigger a failover action. Existing connections will be closed and re-established.
+
+# Are you sure? (Y - yes, any other key - no) y^Hn
+
+# Upgrade stopped.
+# To continue from this step, run: sp_upgrade --continue
+# [Expert@cti-ch01-01:0]# sp_upgrade --continue
+
+# R81.10 Upgrade is in progress on these Security Group Members: 1_1
+
+# Attention: Reboot or policy installation is not allowed during the upgrade (unless the 'sp_upgrade' script tells you to do so). Do not perform these actions until the 'sp_upgrade' script completes its tasks successfully.
+
+# About to perform a cluster failover between the Security Group Members.
+#  - These Security Group Members will change their state to DOWN: 1_2
+#  - These Security Group Members will change their state to ACTIVE: 1_1
+# You are about to perform Failover action between Security Group Members on blades: all
+# Changing the state of these Security Group Members to DOWN: 1_2. This will trigger a failover action. Existing connections will be closed and re-established.
+
+# Are you sure? (Y - yes, any other key - no) y
+
+# Failover action between Security Group Members requires auditing
+# Enter your full name: A
+# Enter reason for Failover action between Security Group Members [Upgrade]:
+# WARNING: Failover action between Security Group Members on blades: all, User: A, Reason: Upgrade
+#  VSX is not supported on this platform
+
+
+# Failover succeeded
+
+
+# Upgrade the Security Group Members 1_2 using this CPUSE command in Gaia gclish: installer upgrade <Press Tab to see Package ID> member_ids <List of Member IDs>
+# Note - In case you do not want to proceed with the installation of the remaining Security Group Members at this stage, you can continue the procedure from this stage at any time. To continue the upgrade later, run: sp_upgrade --continue.
+# Wait for the Security Group Members to finish the upgrade and reboot.
+# When done, enter 'y' or "yes"(enter 'n' or "no" to exit):
+# Network error: Software caused connection abort
+

@@ -1,5 +1,5 @@
 - name: "get date"
-  raw: 'date +"%Y-%m-%d %H:%M:%S"'
+  shell: 'date +"%Y-%m-%d %H:%M:%S"'
   register: res_datetime
   changed_when: false
 

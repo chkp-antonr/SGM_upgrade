@@ -23,6 +23,8 @@
       'Are you sure': "y"
       'Enter your full name:': 'Ansible'
       'Enter reason for': "Automated Upgrade"
+    timeout: 20
+    echo: true
   register: res
   ignore_errors: true
   ignore_unreachable: true
@@ -183,6 +185,8 @@
       'You are about to perform': "y"
       'Enter your full name:': 'Ansible'
       'Enter reason for': "Automated Upgrade"
+    timeout: 60
+    echo: true
   register: res
   ignore_errors: true
   ignore_unreachable: true

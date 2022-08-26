@@ -12,6 +12,10 @@
         logical_member: "{{ logicalBmember }}"
         logical_range: "{{ logicalBrange }}"
 
+    - name: "Timestamp / After sp_upgrade on A"
+      include_tasks: ./include/print_datetime.yml
+      when: loglevel>=2
+
     - name: "Timestamp / Upgraded B"
       include_tasks: ./include/print_datetime.yml
       when: loglevel>=2

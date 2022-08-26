@@ -1,4 +1,4 @@
-- name: "get SMO_IP"
+- name: "get SMO_IP / include/upgrade_to_R81.yml"
   shell: hostname -i
   register: res
   changed_when: false
@@ -7,6 +7,9 @@
   set_fact:
     smo_ip: "{{ res.stdout }}"
 
+- name: "Debug / SMO_IP"
+  debug: msg="{{ smo_ip }}"
+  when: loglevel>=3
 
 # Let's switch to the proper SMO first
 
@@ -23,6 +26,8 @@
       'Are you sure': "y"
       'Enter your full name:': "Ansible"
       'Enter reason for': "Automated Upgrade"
+    timeout: 60
+    echo: true
     timeout: 60
   register: res
   ignore_errors: true
@@ -80,7 +85,8 @@
       'You are about to perform': "y"
       'Enter your full name:': 'Ansible'
       'Enter reason for': "Automated Upgrade"
-    timeout: 300 # fatal, rc=255
+    timeout: 60
+    echo: true
   register: res
   ignore_errors: true
   ignore_unreachable: true
@@ -100,94 +106,33 @@
   include_tasks: ./include/print_datetime.yml
   when: loglevel>=2
 
-# DOWN is OK. How to ensure we are ready for sp_upgrade?
-# g_all -a cphaprob state | grep "Active PNOTE"
-# Active PNOTEs: FSYNC, during_upgrade
-# Active PNOTEs: None
-# All DOWN or DETACHED must be in during_upgrade state (same count)
+### DOWN is OK. Need to ensure we are ready for sp_upgrade
 
-# 1-st maybe disconnected at 1_1
-- name: "Wait for all upgraded PNOTEs have during_upgrade state"
-  shell: |
-    while [ $(asg stat -i proc | egrep -c "DOWN|DETACHED") -ne \
-    $(g_all -a cphaprob state | grep -c during_upgrade) ];    do
-      printf "."; sleep 10;
-    done
-  changed_when: false
-  ignore_errors: true
-  ignore_unreachable: true
-  register: res
+- name: "Wait for FSYNC, during_upgrade"
+  include_tasks: ./include/wait_for_during_upgrade.yml
+  loop:
+    - "First"
+    - "Second"
+    - "Third"
 
-- name: "Debug / After waiting 1"
-  debug: msg="{{ res }}"
+- name: "debug"
+  block:
+    - name: "get SMO_IP"
+      shell: hostname -i
+      register: res_smo_ip
+      changed_when: false
+
+    - name: "cphaprob stat"
+      shell: g_all cphaprob stat
+      register: res
+      changed_when: false
+
+    - name: "Debug / cphaprob stat after upgrading"
+      debug:
+        msg:
+          - "{{ res.stdout_lines }}"
+          - "Upgraded {{ logical_member }}. SMO is {{ res_smo_ip.stdout_lines }}"
   when: loglevel>=3
-
-- name: Establish new connection (in case of SMO switch)
-  # switch on g_clusterXL down for group A
-  wait_for_connection:
-    timeout: 600
-  register: res
-  ignore_unreachable: true
-  ignore_errors: true
-
-# 2-nd maybe connected to 1_2 and disconnected soon
-- name: "Wait for all upgraded PNOTEs have during_upgrade state"
-  shell: |
-    while [ $(asg stat -i proc | egrep -c "DOWN|DETACHED") -ne \
-    $(g_all -a cphaprob state | grep -c during_upgrade) ];    do
-      printf "."; sleep 10;
-    done
-  changed_when: false
-  ignore_errors: true
-  ignore_unreachable: true
-  register: res
-
-- name: "Debug / After waiting 2"
-  debug: msg="{{ res }}"
-  when: loglevel>=3
-
-- name: Establish new connection (in case of SMO switch)
-  # switch on g_clusterXL down for group A
-  wait_for_connection:
-    timeout: 600
-  register: res
-  ignore_unreachable: true
-  ignore_errors: true
-
-# 3-rd to be connected to 1_1 and waiting for real finalization
-- name: "Wait for all upgraded PNOTEs have during_upgrade state"
-  shell: |
-    while [ $(asg stat -i proc | egrep -c "DOWN|DETACHED") -ne \
-    $(g_all -a cphaprob state | grep -c during_upgrade) ];    do
-      printf "."; sleep 10;
-    done
-  changed_when: false
-  ignore_errors: true
-  ignore_unreachable: true
-  register: res
-
-- name: "Debug / After waiting 3"
-  debug: msg="{{ res }}"
-  when: loglevel>=3
-
-- name: "cphaprob stat"
-  shell: g_all cphaprob stat
-  register: res
-  when: loglevel>=3
-
-- name: "Debug / cphaprob stat"
-  debug: msg="{{ res.stdout_lines }}"
-  when: loglevel>=3
-
-- name: "cphaprob stat - expect logical A to be ACTIVE"
-  shell: g_all -b "{{ logicalAmember }}" cphaprob stat | grep "(local)" | grep ACTIVE
-  register: res
-  when: loglevel>=2
-
-- name: "Debug / expect A to be ACTIVE"
-  debug: msg="{{ res.stdout_lines }}"
-  when: loglevel>=2
-# But not ACTIVE(!)
 
 - name: "Ready for sp_upgrade"
   include_tasks: ./include/print_datetime.yml

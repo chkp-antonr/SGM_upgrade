@@ -10,12 +10,12 @@
     #  sed -i 's|^#Subsystem.*sftp.*|Subsystem      sftp    /usr/libexec/openssh/sftp-server|g' /etc/ssh/sshd_config; service sshd reload
     - name: "Step 1 - Fix sshd_config"
       # `lineinfile` is for a single member, need g_all
-      raw: g_all -a "sed -i 's|^#Subsystem.*sftp.*|Subsystem sftp /usr/libexec/openssh/sftp-server|g' /etc/ssh/sshd_config"
+      shell: g_all -a "sed -i 's|^#Subsystem.*sftp.*|Subsystem sftp /usr/libexec/openssh/sftp-server|g' /etc/ssh/sshd_config"
       register: res
       changed_when: false
 
     - name: "Validate sshd_config"
-      raw: g_all -a "grep Subsystem /etc/ssh/sshd_config"
+      shell: g_all -a "grep Subsystem /etc/ssh/sshd_config"
       register: res
       changed_when: false
 
@@ -24,12 +24,12 @@
       when: loglevel>=1
 
     - name: "Restart sshd"  # Doesn't work without reboot?
-      raw: g_all -a "service sshd reload"
+      shell: g_all -a "service sshd reload"
       register: res
       changed_when: false
 
     # - name: "Stop sshd"
-    #   raw: g_all -a pkill -f "sshd"; g_all -a "service sshd start";
+    #   shell: g_all -a pkill -f "sshd"; g_all -a "service sshd start";
     #   changed_when: false
 
     - name: New SSH session
@@ -48,11 +48,11 @@
       when: loglevel>1
 
     - name: "remove coredumps if exist"
-      raw: g_all -a rm /var/log/dump/usermode/*
+      shell: g_all -a rm /var/log/dump/usermode/*
       changed_when: false
 
     - name: "fix trailing spaces in cp-release" # not needed in most cases
-      raw: g_all -a "sed -i 's/[ \t]*$//' /etc/cp-release"
+      shell: g_all -a "sed -i 's/[ \t]*$//' /etc/cp-release"
       changed_when: false
 
 

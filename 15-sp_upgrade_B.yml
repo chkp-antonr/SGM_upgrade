@@ -5,6 +5,8 @@
 
   tasks:
 
+# ! wait for B rebooted
+
     - name: "Step 15 - Continue R81 upgrade rangeB being on A"
       # ! 1 to replace with the calculated number of the package
       delegate_to: 127.0.0.1
@@ -14,7 +16,8 @@
           'password': "{{ ansible_ssh_pass }}"
           '\:0]#': "sp_upgrade --continue"
           'When done, enter': "y"
-        timeout: 120
+        timeout: 60
+        echo: true
       register: res
       ignore_errors: true
       ignore_unreachable: true
@@ -27,7 +30,7 @@
       include_tasks: ./include/print_datetime.yml
       when: loglevel>=2
 
-    - name: "Wait for all members are ACTIVE"
+    - name: "Wait for all members are active"
       shell: |
         while [ $(asg stat -i active_ids | wc -l) -ne \
         $(asg stat -i all_ids | wc -l) ];    do

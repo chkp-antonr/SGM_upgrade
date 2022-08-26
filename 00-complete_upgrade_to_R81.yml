@@ -6,10 +6,10 @@
 # - name: "Intsall JHF"
 #   import_playbook: 06-install_JHF_BA.yml
 
-# - name: "Upgrade Deployment Agent"
-#   import_playbook: 07-upgrade_DA_on-sg.yml
+- name: "Upgrade Deployment Agent"
+  import_playbook: 07-upgrade_DA_on-sg.yml
 
-- name: "Import R81 upgrade packages [on all members]"
+- name: "Import R81 upgrade packages [to all members]"
   import_playbook: 08-import_R81_package.yml
 
 - name: "Upgrade SGMs in logical group A"
@@ -21,11 +21,11 @@
 - name: "sp_upgrade for A"
   import_playbook: 13-sp_upgrade_A.yml
 
-# - name: "Upgrade SGMs in logical group B"
-#   import_playbook: 14-upgrade_R81_B.yml
+- name: "Upgrade SGMs in logical group B"
+  import_playbook: 14-upgrade_R81_B.yml
 
-# - name: "sp_upgrade for B"
-#   import_playbook: 15-sp_upgrade_B.yml
+- name: "sp_upgrade for B"
+  import_playbook: 15-sp_upgrade_B.yml
 
 ###
 

@@ -1,8 +1,8 @@
 ---
-# Step 11, 12 - Edit the Security Gateway object version, install policy
+# Step 19 - Install policy to all members
 # 1) Query GW for policy_name
 # 2) Make changes on MDS
-- name: "Get policy from SMO"
+- name: "Step 19 - Get policy from SMO"
   gather_facts: false
   hosts: sg
 
@@ -18,7 +18,7 @@
         policy_name: "{{ policy_name.stdout }}"
 
 
-- name: "Step 11, 12 - Edit the Security Gateway object version, install policy"
+- name: "Step 19 - Install policy to all members"
   hosts: mds
   gather_facts: false
 
@@ -46,12 +46,6 @@
 
 # ! search for GW_NAME based on SMO ip, DMN, and fetch PACKAGE_NAME from GW
 
-    - name: "Change gw version"
-      shell: >
-        mgmt_cli -u "{{ gui_user }}" -p "{{ gui_pass }}" --format json -d "{{ domain_name }}"
-        set simple-gateway name "{{ gw_name }}" version 'R81.10'
-      changed_when: false
-
     - name: "Publish"
       shell: >
         mgmt_cli -u "{{ gui_user }}" -p "{{ gui_pass }}" --format json -d "{{ domain_name }}"
@@ -62,11 +56,14 @@
     - name: "Prepare policy for install"
       shell: >
         mgmt_cli -u "{{ gui_user }}" -p "{{ gui_pass }}" --format json -d "{{ domain_name }}"
-        install-policy policy-package "{{ policy_name }}" --sync false targets "{{ gw_name }}" prepare-only true
+        install-policy policy-package "{{ policy_name }}"
       changed_when: false
       register: res
 
     - name: "Debug / "
-      debug: msg="Policy prepared {{ res.stdout_lines }}"
+      debug:
+        msg:
+          - "Policy {{ policy_name }}@{{ domain_name }} is installed"
+          - "{{ res.stdout_lines }}"
       ignore_errors: true
       when: loglevel>1
