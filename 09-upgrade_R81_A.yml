@@ -1,0 +1,21 @@
+---
+# https://sc1.checkpoint.com/documents/R81.10/WebAdminGuides/EN/CP_R81.10_Maestro_AdminGuide/Topics-Maestro-AG/Upgrading-Maestro-with-CPUSE.htm?tocpath=Upgrading%20Maestro%20to%20R81.10%7C_____1
+- name: "Step 9 - Upgrade the Security Group Members in the Logical Group A"
+  hosts: sg
+  gather_facts: false
+
+  tasks:
+
+    - name: "Step 9 - Upgrade A to R81"
+      include_tasks: include/upgrade_to_R81.yml
+      vars:
+        logical_member: "{{ logicalAmember }}"
+        logical_range: "{{ logicalArange }}"
+
+    - name: "Debug / Upgrade A to R81"
+      debug: msg="{{ res.stdout_lines }}"
+      when: loglevel>=3
+
+    - name: "Timestamp / Upgraded A"
+      include_tasks: ./include/print_datetime.yml
+      when: loglevel>=2

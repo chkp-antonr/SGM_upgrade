@@ -39,7 +39,7 @@
 
 ### Start installation
 
-    - name: "Install JHF on B"
+    - name: "Step 6 - Install JHF on B"
       include_tasks: include/06-install_JHF.yml
       vars:
         logical_member: "{{ logicalBmember }}"

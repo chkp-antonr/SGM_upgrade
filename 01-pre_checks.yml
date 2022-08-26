@@ -8,7 +8,7 @@
 ### Fix sftp Subsystem
 
     #  sed -i 's|^#Subsystem.*sftp.*|Subsystem      sftp    /usr/libexec/openssh/sftp-server|g' /etc/ssh/sshd_config; service sshd reload
-    - name: "Fix sshd_config"
+    - name: "Step 1 - Fix sshd_config"
       # `lineinfile` is for a single member, need g_all
       raw: g_all -a "sed -i 's|^#Subsystem.*sftp.*|Subsystem sftp /usr/libexec/openssh/sftp-server|g' /etc/ssh/sshd_config"
       register: res
@@ -26,6 +26,7 @@
     - name: "Restart sshd"  # Doesn't work without reboot?
       raw: g_all -a "service sshd reload"
       register: res
+      changed_when: false
 
     # - name: "Stop sshd"
     #   raw: g_all -a pkill -f "sshd"; g_all -a "service sshd start";

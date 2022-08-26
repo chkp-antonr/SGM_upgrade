@@ -1,0 +1,194 @@
+- name: "get SMO_IP"
+  shell: hostname -i
+  register: res
+  changed_when: false
+
+- name: "Store SMO_IP"
+  set_fact:
+    smo_ip: "{{ res.stdout }}"
+
+
+# Let's switch to the proper SMO first
+
+  # "Attention! In case image auto-clone is enabled, this operation may be overridden by auto-cloning from SMO during next boot."
+  # "To disable image auto-clone run: set smo image auto-clone state off",
+  # ! get `show smo image auto-clone state`
+
+- name: "clusterXL down for the logical group"
+  delegate_to: 127.0.0.1
+  expect:
+    command: "ssh -t ansible@{{ inventory_hostname }} g_clusterXL_admin -b {{ logical_range }} down"
+    responses:
+      'password': "{{ ansible_ssh_pass }}"
+      'Are you sure': "y"
+      'Enter your full name:': "Ansible"
+      'Enter reason for': "Automated Upgrade"
+    timeout: 60
+  register: res
+  ignore_errors: true
+  ignore_unreachable: true
+
+- name: "Debug / clusterXL down"
+  debug: msg="{{ res.stdout_lines }}"
+  ignore_errors: true
+  when: loglevel>=3
+
+- name: Establish new connection (as SMO switches to B)
+  # switch on g_clusterXL down for group A
+  wait_for_connection:
+    timeout: 600
+  register: res
+  ignore_unreachable: true
+  ignore_errors: true
+
+- name: "get SMO_IP"
+  shell: hostname -i
+  register: res
+  changed_when: false
+  ignore_unreachable: true
+
+- name: "Store SMO_IP"
+  set_fact:
+    smo_ip: "{{ res.stdout }}"
+
+- name: "Debug / SMO_IP just before upgrade"
+  debug:
+    msg: "{{ smo_ip }}"
+  ignore_errors: true
+  when: loglevel>1
+
+
+### Find package index and upgarde
+# ! pkg_index is not used yet
+
+- name: "Get pkg_index"
+  include_tasks: include/get_pkg_index.yml
+  vars:
+    package_file_name: "{{ pkg_upgrade_R81 }}"
+    # logical_member: "{{ Inherited from [09|14]-upgrade_R81-[A|B] }}"
+
+- name: "Upgrade to R81"
+  # ! 1 to replace with the calculated number of the package
+  delegate_to: 127.0.0.1
+  expect:
+    command: 'ssh -t ansible@{{ inventory_hostname }} member {{ logical_member }}'
+    responses:
+      'password': "{{ ansible_ssh_pass }}"
+      '\:0]#': "gclish -c \"installer upgrade 1 member_ids {{ logical_range }}\""
+      'Do you want to continue': "y"
+      'Are you sure': "y"
+      'You are about to perform': "y"
+      'Enter your full name:': 'Ansible'
+      'Enter reason for': "Automated Upgrade"
+    timeout: 300 # fatal, rc=255
+  register: res
+  ignore_errors: true
+  ignore_unreachable: true
+
+- name: "Debug / Upgrade to R81"
+  debug: msg="{{ res.stdout_lines }}"
+  when: loglevel>=2
+
+- name: "Debug / Upgrade to R81 in progress"
+  debug:
+    msg:
+      - "Upgrade to R81 in progress on {{ logical_range }} from {{ smo_ip }}"
+  ignore_errors: true
+  when: loglevel>0
+
+- name: "Returned from install, start waiting for reboot"
+  include_tasks: ./include/print_datetime.yml
+  when: loglevel>=2
+
+# DOWN is OK. How to ensure we are ready for sp_upgrade?
+# g_all -a cphaprob state | grep "Active PNOTE"
+# Active PNOTEs: FSYNC, during_upgrade
+# Active PNOTEs: None
+# All DOWN or DETACHED must be in during_upgrade state (same count)
+
+# 1-st maybe disconnected at 1_1
+- name: "Wait for all upgraded PNOTEs have during_upgrade state"
+  shell: |
+    while [ $(asg stat -i proc | egrep -c "DOWN|DETACHED") -ne \
+    $(g_all -a cphaprob state | grep -c during_upgrade) ];    do
+      printf "."; sleep 10;
+    done
+  changed_when: false
+  ignore_errors: true
+  ignore_unreachable: true
+  register: res
+
+- name: "Debug / After waiting 1"
+  debug: msg="{{ res }}"
+  when: loglevel>=3
+
+- name: Establish new connection (in case of SMO switch)
+  # switch on g_clusterXL down for group A
+  wait_for_connection:
+    timeout: 600
+  register: res
+  ignore_unreachable: true
+  ignore_errors: true
+
+# 2-nd maybe connected to 1_2 and disconnected soon
+- name: "Wait for all upgraded PNOTEs have during_upgrade state"
+  shell: |
+    while [ $(asg stat -i proc | egrep -c "DOWN|DETACHED") -ne \
+    $(g_all -a cphaprob state | grep -c during_upgrade) ];    do
+      printf "."; sleep 10;
+    done
+  changed_when: false
+  ignore_errors: true
+  ignore_unreachable: true
+  register: res
+
+- name: "Debug / After waiting 2"
+  debug: msg="{{ res }}"
+  when: loglevel>=3
+
+- name: Establish new connection (in case of SMO switch)
+  # switch on g_clusterXL down for group A
+  wait_for_connection:
+    timeout: 600
+  register: res
+  ignore_unreachable: true
+  ignore_errors: true
+
+# 3-rd to be connected to 1_1 and waiting for real finalization
+- name: "Wait for all upgraded PNOTEs have during_upgrade state"
+  shell: |
+    while [ $(asg stat -i proc | egrep -c "DOWN|DETACHED") -ne \
+    $(g_all -a cphaprob state | grep -c during_upgrade) ];    do
+      printf "."; sleep 10;
+    done
+  changed_when: false
+  ignore_errors: true
+  ignore_unreachable: true
+  register: res
+
+- name: "Debug / After waiting 3"
+  debug: msg="{{ res }}"
+  when: loglevel>=3
+
+- name: "cphaprob stat"
+  shell: g_all cphaprob stat
+  register: res
+  when: loglevel>=3
+
+- name: "Debug / cphaprob stat"
+  debug: msg="{{ res.stdout_lines }}"
+  when: loglevel>=3
+
+- name: "cphaprob stat - expect logical A to be ACTIVE"
+  shell: g_all -b "{{ logicalAmember }}" cphaprob stat | grep "(local)" | grep ACTIVE
+  register: res
+  when: loglevel>=2
+
+- name: "Debug / expect A to be ACTIVE"
+  debug: msg="{{ res.stdout_lines }}"
+  when: loglevel>=2
+# But not ACTIVE(!)
+
+- name: "Ready for sp_upgrade"
+  include_tasks: ./include/print_datetime.yml
+  when: loglevel>=2

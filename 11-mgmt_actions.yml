@@ -1,5 +1,7 @@
 ---
 # Step 11, 12 - Edit the Security Gateway object version, install policy
+# 1) Query GW for policy_name
+# 2) Make changes on MDS
 - name: "Get policy from SMO"
   gather_facts: false
   hosts: sg
@@ -35,7 +37,7 @@
         gw_name: "{{ hostvars[groups.sg[0]]['gw_name'] }}"
 
     - name: "Debug / Names"
-      debug: msg="{{ policy_name }} @ {{ gw_name }} in {{ domain_name }}"
+      debug: msg="{{ policy_name }}@{{ gw_name }} in {{ domain_name }}"
       ignore_errors: true
       when: loglevel>0
 

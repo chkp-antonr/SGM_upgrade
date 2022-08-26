@@ -1,0 +1,40 @@
+### Get package index available for install (0 - not found) on member
+# Expected vars: package_file_name, logical_member
+# Returns pkg_index
+- name: "Set"
+  set_fact:
+    base_package_fn: "{{ package_file_name[:-4] }}"
+    # to avoid mess with tar and tgz
+
+- name: "Get package index"
+  shell: >
+    set -o pipefail &&
+    g_all -b "{{ logical_member }}"
+    da_cli packages_info status=all | tail -n +2 |
+    jq '[ .packages[] | .filename | startswith("{{ base_package_fn }}") ] | index(true)'
+  register: res
+  ignore_errors: true
+  changed_when: false
+
+- name: "set pkg_index"
+  set_fact:
+    pkg_index: "{{ 0 if res.stdout == 'null' else res.stdout | int +1 }}"
+
+- name: "Debug / No package available for install"
+  # ! fail playbook?
+  debug:
+    msg:
+      - "No package available at {{ logical_member }} for install ({{ pkg_index }})"
+      - "{{ package_file_name }}"
+  ignore_errors: true
+  when: pkg_index | int == 0
+
+- name: "Debug / Package index to be installed"
+  debug:
+    msg:
+      - "Package index {{ pkg_index }} to be installed on {{ logical_member }}"
+      - "{{ package_file_name }}"
+  ignore_errors: true
+  when:
+    - pkg_index | int > 0
+    - loglevel>=2

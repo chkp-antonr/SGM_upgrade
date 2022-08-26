@@ -1,0 +1,132 @@
+---
+- name: "Step 13 - sp_upgrade (as one step)"
+  hosts: sg
+  gather_facts: false
+
+  tasks:
+
+    - name: "Step 13 - Install R81 upgrade by switching to rangeA being on A"
+      # ! 1 to replace with the calculated number of the package
+      # g_all -b 1_1 doesn't provide TTY (only returns output), so use `memeber`
+      delegate_to: 127.0.0.1
+      expect:
+        command: 'ssh -t ansible@{{ inventory_hostname }} member {{ logicalAmember }}'
+        responses:
+          'password': "{{ ansible_ssh_pass }}"
+          '\:0]#': "sp_upgrade"
+          'When done, enter': "y"
+          'Are you sure': "y"
+          'You are about to perform': "y"
+          'Enter your full name:': 'Ansible'
+          'Enter reason for': "Automated Upgrade"
+      register: res
+      ignore_errors: true
+      ignore_unreachable: true
+# sp_upgarde is expected to be disconnected, though there is N to --continue for B
+
+    - name: "Debug / Installed on A"
+      debug: msg="{{ res }}"
+      when: loglevel>=3
+
+    - name: "Timestamp / Installed on A"
+      include_tasks: ./include/print_datetime.yml
+      when: loglevel>=2
+
+
+
+# member 1_1
+
+# R81.10 Upgrade is in progress on these Security Group Members: 1_1
+
+# Attention: Reboot or policy installation is not allowed during the upgrade
+# (unless the 'sp_upgrade' script tells you to do so). Do not perform these actions until the 'sp_upgrade' script completes its tasks successfully.
+
+# Change the Security Gateway object version to R81.10 -
+# (1) Connect with SmartConsole to the Management Server
+# (2) Open the Security Gateway object for this Security Group
+# (3) In the 'Version' field, select R81.10
+# (4) Click OK
+# (5) Publish the session (do not install the policy).
+# When done, enter 'y' or "yes"(enter 'n' or "no" to exit):
+
+# Run this API command on the Management Server CLI to prepare the new policy:
+# (Enter the applicable values in the <Policy_Name> and <Security_Gateway_Object_Name>.
+# On a Multi-Domain Server, replace 'SMC User' with the name or IP of the Domain Management Server that manages this VSX Gateway)
+#  "mgmt_cli -d 'SMC User' --format json install-policy policy-package <Policy_Name> --sync false targets <Security_Gateway_Object_Name> prepare-only true".
+# When done, enter 'y' or "yes"(enter 'n' or "no" to exit):
+
+
+# Fetching the policy from the Management Server and installing it... Succeeded
+# The Anti-Malware (AMW) policy for this Gateway or current VS context, does not exist on the Management Server - skipping the AMW policy fetch.
+
+# About to perform a cluster failover between the Security Group Members.
+#  - These Security Group Members will change their state to DOWN: 1_2
+#  - These Security Group Members will change their state to ACTIVE: 1_1
+# You are about to perform Failover action between Security Group Members on blades: all
+# Changing the state of these Security Group Members to DOWN: 1_2. This will trigger a failover action. Existing connections will be closed and re-established.
+
+# Are you sure? (Y - yes, any other key - no)
+
+
+# Failover action between Security Group Members requires auditing
+# Enter your full name:
+# Enter reason for Failover action between Security Group Members [Upgrade]:
+
+# WARNING: Failover action between Security Group Members on blades: all, User: Ansible, Reason: Upgrade
+#  VSX is not supported on this platform
+
+
+# Failover succeeded
+
+# Upgrade the Security Group Members 1_2 using this CPUSE command in Gaia gclish:
+# installer upgrade <Press Tab to see Package ID> member_ids <List of Member IDs>
+# Note - In case you do not want to proceed with the installation of the remaining Security Group Members at this stage,
+# you can continue the procedure from this stage at any time. To continue the upgrade later, run: sp_upgrade --continue.
+# Wait for the Security Group Members to finish the upgrade and reboot.
+# When done, enter 'y' or "yes"(enter 'n' or "no" to exit):
+
+# NO! and run 09 again
+# Though it dissconnects because of SMO transition
+
+# expect loosing connection - suggest to work via MHO m 1_1
+#
+# When start (1_1 upgraded but not fetched policy yet, 1_2 is active)
+# +----------------------------------------------------------------------+
+# |Policy Verification                                                   |
+# +-------+-------------------+---------------+-----------------+--------+
+# |SGM    |Policy Name        |Policy Date    |Policy Signature |Status  |
+# +-------+-------------------+---------------+-----------------+--------+
+# |1_01   |InitialPolicy      |22Aug22 08:54  |7fe2a401f        |Failed  |
+# |1_02   |Standard           |22Aug22 08:54  |ba4ca088a        |Success |
+# +-------+-------------------+---------------+-----------------+--------+
+
+# On completed
+# +----------------------------------------------------------------------+
+# |Policy Verification                                                   |
+# +-------+-------------------+---------------+-----------------+--------+
+# |SGM    |Policy Name        |Policy Date    |Policy Signature |Status  |
+# +-------+-------------------+---------------+-----------------+--------+
+# |1_01   |Standard           |22Aug22 08:54  |276ab62df        |Failed  |
+# |1_02   |Standard           |22Aug22 08:54  |ba4ca088a        |Failed  |
+# +-------+-------------------+---------------+-----------------+--------+
+# +------------------------------------------------------------------------------+
+# |Summary                                                                       |
+# +------------------------------------------------------------------------------+
+# |Policy Verification completed with the following errors:                      |
+# |1. [1_01:0]: Policy signature doesn't match on all SGMs                       |
+# |2. [1_02:0]: Policy signature doesn't match on all SGMs                       |
+# |                                                                              |
+# +------------------------------------------------------------------------------+
+
+# [Expert@cti-ch01-01:0]# cphaprob stat
+# Cluster Mode:   HA Over LS
+# ID         Unique Address  Assigned Load   State          Name
+# 1 (local)  192.0.2.1       100%            ACTIVE         cti-ch01-01
+# 2          192.0.2.2       0%              DOWN           cti-ch01-02
+#
+# Active PNOTEs: None
+# Last member state change event:
+#    Event Code:                 CLUS-114604
+#    State change:               DOWN -> ACTIVE
+#    Reason for state change:    Member is now fully operational as part of Load Sharing ClusterXL
+#    Event time:                 Fri Aug 26 09:42:37 2022

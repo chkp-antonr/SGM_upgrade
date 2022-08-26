@@ -1,0 +1,43 @@
+---
+- name: "Step 15 - sp_upgrade B (--continue)"
+  hosts: sg
+  gather_facts: false
+
+  tasks:
+
+    - name: "Step 15 - Continue R81 upgrade rangeB being on A"
+      # ! 1 to replace with the calculated number of the package
+      delegate_to: 127.0.0.1
+      expect:
+        command: 'ssh -t ansible@{{ inventory_hostname }} member {{ logicalAmember }}'
+        responses:
+          'password': "{{ ansible_ssh_pass }}"
+          '\:0]#': "sp_upgrade --continue"
+          'When done, enter': "y"
+        timeout: 120
+      register: res
+      ignore_errors: true
+      ignore_unreachable: true
+
+    - name: "Debug / Upgrade B to R81"
+      debug: msg="{{ res }}"
+      when: loglevel>=3
+
+    - name: "Timestamp / Installed on B"
+      include_tasks: ./include/print_datetime.yml
+      when: loglevel>=2
+
+    - name: "Wait for all members are ACTIVE"
+      shell: |
+        while [ $(asg stat -i active_ids | wc -l) -ne \
+        $(asg stat -i all_ids | wc -l) ];    do
+          printf "."; sleep 10;
+        done
+      changed_when: false
+      ignore_errors: true
+      ignore_unreachable: true
+      register: res
+
+    - name: "R81 installed successfully!"
+      include_tasks: ./include/print_datetime.yml
+      when: loglevel>=2

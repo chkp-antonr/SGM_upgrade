@@ -1,44 +1,52 @@
+- name: "get SMO_IP"
+  shell: hostname -i
+  register: res
+  changed_when: false
+
+- name: "Debug / SMO_IP"
+  debug: msg="SMO_IP {{ res.stdout }}"
+
+- name: "set Import to member"
+  set_fact:
+    import_to_member: " member_ids {{ logical_member }}"
+  when: logical_member is defined
+
 - name: "Create local repo dir"
   file:
     path: "{{ local_repo }}"
     state: directory
+    mode: 0777
 
 # ! from Ansible server
+# and from SMO to the target SGM if needed
 - name: "Download JHF to local repo"
   get_url:
     url: "{{ remote_repo }}/{{ package_name }}"
     dest: "{{ local_repo }}"
+    mode: 0644
 
-- name: "Base name"
-  # Its full name doesn't fit a single line in 'show imported', trim extension
-  set_fact: pkg_short="{{ package_name[:45] }}"
+# - name: "Base name"
+#   # Its full name doesn't fit a single line in 'show imported', trim extension
+#   set_fact: pkg_short="{{ package_name[:45] }}"
 
-- name: "Debug / pkg_short"
-  debug: msg="{{ pkg_short }}"
-  when: loglevel>=3
+# - name: "Debug / pkg_short"
+#   debug: msg="{{ pkg_short }}"
+#   when: loglevel>=3
 
-- name: "Check if already imported"
-  shell: gclish -c "show installer packages imported"
-  register: res_imported
+- name: "config-lock"
+  shell: gclish -c "set config-lock on override"
   changed_when: false
 
-- name: "Check if package is not imported yet"
-  block:
+- name: "lock database override"
+  shell: gclish -c "lock database override"
+  changed_when: false
 
-    - name: "config-lock"
-      shell: gclish -c "set config-lock on override"
-      changed_when: false
+- name: "Import package"
+  shell: gclish -c "installer import local {{ local_repo }}/{{ package_name }} {{ import_to_member }}"
+  register: res
+  changed_when: false
+  ignore_errors: true
 
-    - name: "lock database override"
-      shell: gclish -c "lock database override"
-      changed_when: false
-
-    - name: "Import package"
-      shell: gclish -c "installer import local {{ local_repo }}/{{ package_name }}"
-      register: res
-      changed_when: false
-
-    - name: Debug
-      debug: msg="{{ res.stdout_lines }}"
-      when: loglevel>0
-  when: pkg_short|string not in res_imported.stdout
+- name: Debug
+  debug: msg="{{ res.stdout_lines }}"
+  when: loglevel>0

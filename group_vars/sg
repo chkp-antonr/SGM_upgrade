@@ -6,9 +6,9 @@ logicalBrange: "1_2"
 # we start upgrade from B to avoid extra disconnects due to SMO switching
 # logicalRanges: ["1_1-1_3","1_4-1_6"]
 
-domain: "Cti"
+domain_name: "Cti"
 gw_name: "cti"
-policy_name: "Standard" # ! query gateway
+#policy_name: "StandardI" # ! query gateway
 jhf_R80: Check_Point_R80_30SP_JHF_MAIN_Bundle_T101_FULL.tgz
 da_R80: DeploymentAgent_R80.30SP_000000027_1.tgz
 pkg_upgrade_R81: Check_Point_R81.10_T338_ScalablePlatform_Upgrade.tar

@@ -30,7 +30,7 @@
 - name: "Debug / clusterXL down"
   debug: msg="{{ res.stdout_lines }}"
   ignore_errors: true
-  when: loglevel>1
+  when: loglevel>=3
 
 - name: Establish new connection (in case of SMO switch)
   # switch on g_clusterXL down for group A
@@ -84,14 +84,19 @@
   debug: msg="{{ res.stdout_lines }}"
   when: loglevel>=2
 
-# ! Find package index
+
+### Find package index and verify
+# ! pkg_index is not used yet
+
+- name: "Get pkg_index"
+  include_tasks: include/get_pkg_index.yml
+  vars:
+    package_file_name: "{{ jhf_R80 }}"
+    # logical_member: "{{ Inherited }}"
 
 - name: "Timestamp / After importing package"
   include_tasks: ./include/print_datetime.yml
   when: loglevel>=2
-
-
-### Verify
 
 - name: "set range for Verify installer for the second run"
   set_fact:
@@ -99,8 +104,7 @@
   when: not is_first|bool
 
 - name: "Verify installer"
-  # no member_ids (check all members) for the first run
-  shell: gclish -c "installer verify 1 {{ verify_range|default('') }}" | tail -15
+  shell: gclish -c "installer verify 1"
   register: res_verify
   changed_when: false
   ignore_errors: true

@@ -42,3 +42,6 @@ pre_upgrade_verifier: pre_upgrade_verifier.sh
 # jhf_R8030SP: Check_Point_R80_30SP_JHF_MAIN_Bundle_T97_FULL.tgz
 # da_R8030_R81SP: DeploymentAgent_R80.30SP_000000027_1.tgz
 # pkg_upgrade_R81: Check_Point_R81.10_T338_ScalablePlatform_Upgrade.tar
+
+# Extra vars
+import_to_member: "" # keep empty string
