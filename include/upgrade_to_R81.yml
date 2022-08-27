@@ -28,7 +28,6 @@
       'Enter reason for': "Automated Upgrade"
     timeout: 60
     echo: true
-    timeout: 60
   register: res
   ignore_errors: true
   ignore_unreachable: true
@@ -70,6 +69,14 @@
   vars:
     package_file_name: "{{ pkg_upgrade_R81 }}"
     # logical_member: "{{ Inherited from [09|14]-upgrade_R81-[A|B] }}"
+
+- name: "No package to install - break!"
+  fail:
+    msg:
+      - "Oops. No package to install on {{ logical_member }}!"
+      - "{{ pkg_upgrade_R81 }} missed"
+  when: pkg_index | int == 0
+  # ! Need better eror handling
 
 - name: "Upgrade to R81"
   # ! 1 to replace with the calculated number of the package

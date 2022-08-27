@@ -9,8 +9,8 @@
 - name: "Get package index"
   shell: >
     set -o pipefail &&
-    g_all -b "{{ logical_member }}"
-    da_cli packages_info status=available_for_install | tail -n +2 |
+    gexec -b "{{ logical_member }}" -c "da_cli packages_info status=available_for_install"
+    | cut -c 7- |
     jq '[ .packages[] | .filename | startswith("{{ base_package_fn }}") ] | index(true)'
   register: res
   ignore_errors: true
@@ -38,3 +38,29 @@
   when:
     - pkg_index | int > 0
     - loglevel>=2
+
+
+#     - name: "Temporary stop"
+#       meta: end_play
+
+# da_cli import package=<name> [location=<location>]
+# da_cli download package=<name>
+# da_cli verify package=<name>
+# da_cli install package=<name> [reboot_delay=<time in seconds>]
+# da_cli clean_install package=<name> [reboot_delay=<time in seconds>]
+# da_cli upgrade package=<name> [reboot_delay=<time in seconds>]
+# da_cli uninstall package=<name> [reboot_delay=<time in seconds>]
+# da_cli package_info package=<name>
+# da_cli add_private_package package=<name>
+# da_cli packages_info [status=<all|available|available_for_download|available_for_install|installed|recommended|visible>]
+# da_cli get_status_of_action actionID=<id>
+# da_cli da_status
+# da_cli is_pending_reboot
+# da_cli cancel_reboot_delay
+# da_cli get_version
+# da_cli collect_logs [destination=<full file path | destination directory>]
+# da_cli upgrade_tools_update_status
+# da_cli update_upgrade_tools
+# da_cli skipped_install
+# da_cli show_progress [progress_file=<file name>]
+# da_cli edit_configuration

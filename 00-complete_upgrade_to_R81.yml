@@ -3,11 +3,11 @@
 - name: "Pre-checks, optional"
   import_playbook: 01-pre_checks.yml
 
-- name: "Intsall JHF"
+- name: "Install JHF"
   import_playbook: 06-install_JHF_BA.yml
 
 - name: "Upgrade Deployment Agent"
-  import_playbook: 07-upgrade_DA_on-sg.yml
+  import_playbook: 07-upgrade_DA_on_sg.yml
 
 - name: "Import R81 upgrade packages [to all members]"
   import_playbook: 08-import_R81_package.yml
@@ -34,4 +34,3 @@
 
 # - name: ""
 #   import_playbook: 20-R81-add JHF.yml
-

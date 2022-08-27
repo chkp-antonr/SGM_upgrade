@@ -9,6 +9,10 @@
 
 ### Prepare and clean
 
+    - name: "Timestamp / Start Step 6"
+      include_tasks: ./include/print_datetime.yml
+      when: loglevel>=2
+
     - name: "remove usermode coredumps if exist"
       shell: g_all -a rm /var/log/dump/usermode/*
       changed_when: false
@@ -27,7 +31,7 @@
       changed_when: false
 
     - name: "Translation result"
-      shell: g_all -a "echo '|$(cat /etc/cp-release)|'"
+      shell: set -o pipefail && g_all -a "echo '|$(cat /etc/cp-release)|'"
       changed_when: false
       register: res
       when: loglevel>=2

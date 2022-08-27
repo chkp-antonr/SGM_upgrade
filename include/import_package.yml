@@ -47,6 +47,6 @@
   changed_when: false
   ignore_errors: true
 
-- name: Debug
+- name: "Debug / Imported package"
   debug: msg="{{ res.stdout_lines }}"
   when: loglevel>0

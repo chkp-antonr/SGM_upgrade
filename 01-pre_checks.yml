@@ -7,10 +7,13 @@
 
 ### Fix sftp Subsystem
 
+    # - name: "QQ"
+    #   include_tasks: include/wait_for_all_active.yml
+
     #  sed -i 's|^#Subsystem.*sftp.*|Subsystem      sftp    /usr/libexec/openssh/sftp-server|g' /etc/ssh/sshd_config; service sshd reload
     - name: "Step 1 - Fix sshd_config"
       # `lineinfile` is for a single member, need g_all
-      shell: g_all -a "sed -i 's|^#Subsystem.*sftp.*|Subsystem sftp /usr/libexec/openssh/sftp-server|g' /etc/ssh/sshd_config"
+      shell: set -o pipefail && g_all -a "sed -i 's|^#Subsystem.*sftp.*|Subsystem sftp /usr/libexec/openssh/sftp-server|g' /etc/ssh/sshd_config"
       register: res
       changed_when: false
 

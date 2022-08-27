@@ -53,7 +53,7 @@
       changed_when: false
       register: res
 
-    - name: "Prepare policy for install"
+    - name: "Installing policy"
       shell: >
         mgmt_cli -u "{{ gui_user }}" -p "{{ gui_pass }}" --format json -d "{{ domain_name }}"
         install-policy policy-package "{{ policy_name }}"
@@ -63,7 +63,8 @@
     - name: "Debug / "
       debug:
         msg:
-          - "Policy {{ policy_name }}@{{ domain_name }} is installed"
           - "{{ res.stdout_lines }}"
+          - "Policy {{ policy_name }}@{{ domain_name }} is installed."
+          - "Enjoy R81 on {{ gw_name }} :)"
       ignore_errors: true
       when: loglevel>1

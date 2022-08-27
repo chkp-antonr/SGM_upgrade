@@ -1,0 +1,11 @@
+- name: "Wait for all members active"
+  shell: |
+    while [ $(asg stat -i all_ids | wc -l) -ne \
+      $(asg stat -i active_ids | wc -l) ];
+    do
+      printf "."; sleep 10;
+    done
+  changed_when: false
+  ignore_errors: true
+  ignore_unreachable: true
+  register: res
