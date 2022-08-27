@@ -1,21 +1,24 @@
 ---
 # https://sc1.checkpoint.com/documents/R81.10/WebAdminGuides/EN/CP_R81.10_Maestro_AdminGuide/Topics-Maestro-AG/Upgrading-Maestro-with-CPUSE.htm?tocpath=Upgrading%20Maestro%20to%20R81.10%7C_____1
-- name: "Step 9 - Upgrade the Security Group Members in the Logical Group A"
+- name: "Step 14 - Upgrade the Security Group Members in the Logical Group A"
   hosts: sg
   gather_facts: false
 
   tasks:
 
-    - name: "Step 9 - Upgrade A to R81"
+    - name: "Step 14 - Install R81 upgrade by switching to rangeB being on A"
       include_tasks: include/upgrade_to_R81.yml
       vars:
         logical_member: "{{ logicalAmember }}"
         logical_range: "{{ logicalArange }}"
 
-    - name: "Debug / Upgrade A to R81"
-      debug: msg="{{ res.stdout_lines }}"
-      when: loglevel>=3
+    - name: "Timestamp / After sp_upgrade on A"
+      include_tasks: ./include/print_datetime.yml
+      when: loglevel>=2
 
     - name: "Timestamp / Upgraded A"
       include_tasks: ./include/print_datetime.yml
       when: loglevel>=2
+
+# [Expert@cti-ch01-02:0]# tail -f /opt/CPInstLog/DeploymentAgent.log
+# [2022-08-26 - 09:45:30][15710 16905]:Created new partition for Major upgrade

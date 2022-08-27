@@ -10,7 +10,7 @@
   shell: >
     set -o pipefail &&
     g_all -b "{{ logical_member }}"
-    da_cli packages_info status=all | tail -n +2 |
+    da_cli packages_info status=available_for_install | tail -n +2 |
     jq '[ .packages[] | .filename | startswith("{{ base_package_fn }}") ] | index(true)'
   register: res
   ignore_errors: true

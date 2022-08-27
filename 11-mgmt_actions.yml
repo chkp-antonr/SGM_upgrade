@@ -12,7 +12,8 @@
       shell: "set -o pipefail && fw stat | tail -1 | awk '{ print $2 }'"
       register: policy_name
       changed_when: false
-
+      # ! Should not be InitialPolicy or -
+      
     - name: "Set policy name"
       set_fact:
         policy_name: "{{ policy_name.stdout }}"

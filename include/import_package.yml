@@ -19,7 +19,7 @@
 
 # ! from Ansible server
 # and from SMO to the target SGM if needed
-- name: "Download JHF to local repo"
+- name: "Download package to local repo"
   get_url:
     url: "{{ remote_repo }}/{{ package_name }}"
     dest: "{{ local_repo }}"

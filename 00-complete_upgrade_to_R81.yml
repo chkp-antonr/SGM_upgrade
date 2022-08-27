@@ -1,10 +1,10 @@
 ---
 
-# - name: "Pre-checks, optional"
-#   import_playbook: 01-pre_checks.yml
+- name: "Pre-checks, optional"
+  import_playbook: 01-pre_checks.yml
 
-# - name: "Intsall JHF"
-#   import_playbook: 06-install_JHF_BA.yml
+- name: "Intsall JHF"
+  import_playbook: 06-install_JHF_BA.yml
 
 - name: "Upgrade Deployment Agent"
   import_playbook: 07-upgrade_DA_on-sg.yml
@@ -12,28 +12,26 @@
 - name: "Import R81 upgrade packages [to all members]"
   import_playbook: 08-import_R81_package.yml
 
-- name: "Upgrade SGMs in logical group A"
-  import_playbook: 09-upgrade_R81_A.yml
+- name: "Upgrade SGMs in logical group B"
+  import_playbook: 09-upgrade_R81_B.yml
 
 - name: "Change GW version, prepare policy"
   import_playbook: 11-mgmt_actions.yml
 
-- name: "sp_upgrade for A"
-  import_playbook: 13-sp_upgrade_A.yml
-
-- name: "Upgrade SGMs in logical group B"
-  import_playbook: 14-upgrade_R81_B.yml
-
 - name: "sp_upgrade for B"
-  import_playbook: 15-sp_upgrade_B.yml
+  import_playbook: 13-sp_upgrade_B.yml
+
+- name: "Upgrade SGMs in logical group A"
+  import_playbook: 14-upgrade_R81_A.yml
+
+- name: "sp_upgrade for A"
+  import_playbook: 15-sp_upgrade_A.yml
+
+- name: "Install R81 policy on both"
+  import_playbook: 19-install_R81_policy.yml
 
 ###
-
-# - name: "Install R81 policy on both"
-#   import_playbook: 19-install_R81_policy.yml
 
 # - name: ""
 #   import_playbook: 20-R81-add JHF.yml
 
-# - name: "Not used notmally"
-#   import_playbook: 14-import_R81_package_B.yml

@@ -1,19 +1,19 @@
 ---
-- name: "Step 13 - sp_upgrade (as one step)"
+- name: "Step 13 - sp_upgrade (as one step) on B"
   hosts: sg
   gather_facts: false
 
   tasks:
 
-    - name: "Step 13 - Install R81 upgrade by switching to rangeA being on A"
+    - name: "Step 13 - Install R81 upgrade by switching to rangeB being on A"
       # ! 1 to replace with the calculated number of the package
       # g_all -b 1_1 doesn't provide TTY (only returns output), so use `memeber`
       delegate_to: 127.0.0.1
       expect:
-        command: 'ssh -t ansible@{{ inventory_hostname }} member {{ logicalAmember }}'
+        command: 'ssh -t ansible@{{ inventory_hostname }} member {{ logicalBmember }}'
         responses:
           'password': "{{ ansible_ssh_pass }}"
-          '\:0]#': "sp_upgrade"
+          '\:0]#': "sp_upgrade; exit"
           'When done, enter': "y"
           'Are you sure': "y"
           'You are about to perform': "y"
@@ -31,13 +31,13 @@
 # after upgrading B return to A and --continue
 # Active PNOTEs: LACP_SYNC, then ACTIVE
 
-    - name: "Debug / After sp_upgrade on A"
+    - name: "Debug / After sp_upgrade on B"
       debug: msg="{{ res }}"
       when: loglevel>=3
 
-# ! waiting FSYNC, during_upgrade for local on A
+# ! waiting FSYNC, during_upgrade for local on B
 
-    - name: "Wait for FSYNC, during_upgrade on local member A"
+    - name: "Wait for FSYNC, during_upgrade on local member B"
       shell: |
         while [ $(asg stat -i proc | egrep -c "DOWN|DETACHED") -ne \
         $(g_all -a cphaprob state | grep -c "FSYNC, during_upgrade") ];    do
@@ -48,7 +48,7 @@
       ignore_unreachable: true
       register: res
 
-    - name: "Timestamp / After sp_upgrade on A"
+    - name: "Timestamp / After sp_upgrade on B"
       include_tasks: ./include/print_datetime.yml
       when: loglevel>=2
 

@@ -154,23 +154,11 @@
 #   ignore_unreachable: true
 #   when: is_first|bool
 
-# - name: "Install JHF on A"
-#   # ! 1 to replace with the calculated number of the package
-#   delegate_to: 127.0.0.1
-#   expect:
-#     command: 'ssh -t ansible@{{ inventory_hostname }} member {{ logicalAmember }}'
-#     responses:
-#       'password': "{{ ansible_ssh_pass }}"
-#       '\:0]#': "gclish -c \"installer install 1 member_ids {{ logical_range }}\""
-#       'Do you want to continue': "y"
-#       'Are you sure': "y"
-#       'You are about to perform': "y"
-#       'Enter your full name:': 'Ansible'
-#       'Enter reason for': "Automated Upgrade"
-#   register: res
-#   ignore_errors: true
-#   ignore_unreachable: true
-#   when: not is_first|bool
+- name: "Get pkg_index"
+  include_tasks: include/get_pkg_index.yml
+  vars:
+    package_file_name: "{{ jhf_R80 }}"
+    # logical_member: "{{ Inherited }}"
 
 - name: "Install JHF by switching to the affected member"
   # ! 1 to replace with the calculated number of the package
@@ -179,7 +167,7 @@
     command: 'ssh -t ansible@{{ inventory_hostname }} member {{ logical_member }}'
     responses:
       'password': "{{ ansible_ssh_pass }}"
-      '\:0]#': "gclish -c \"installer install 1 member_ids {{ logical_range }}\""
+      '\:0]#': "gclish -c \"installer install {{ pkg_index }} member_ids {{ logical_range }}\""
       'Do you want to continue': "y"
       'Are you sure': "y"
       'You are about to perform': "y"

@@ -63,8 +63,7 @@
   when: loglevel>1
 
 
-### Find package index and upgarde
-# ! pkg_index is not used yet
+### Find package index and upgrade
 
 - name: "Get pkg_index"
   include_tasks: include/get_pkg_index.yml
@@ -79,7 +78,7 @@
     command: 'ssh -t ansible@{{ inventory_hostname }} member {{ logical_member }}'
     responses:
       'password': "{{ ansible_ssh_pass }}"
-      '\:0]#': "gclish -c \"installer upgrade 1 member_ids {{ logical_range }}\""
+      '\:0]#': "gclish -c \"installer upgrade {{ pkg_index }} member_ids {{ logical_range }}\""
       'Do you want to continue': "y"
       'Are you sure': "y"
       'You are about to perform': "y"
