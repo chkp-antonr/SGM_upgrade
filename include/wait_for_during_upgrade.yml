@@ -5,29 +5,29 @@
       register: res_smo_ip
       changed_when: false
 
-    - name: "Check cphaprob"
+    - name: "Check cphaprob (all_ids; ACTIVE; DOWN|DETACHED; FSYNC, during_upgrade"
       shell: |
         asg stat -i all_ids
-        g_all -a cphaprob state | grep "Active PNOTEs"
+        gexec -a -c "cphaprob state" | grep "Active PNOTEs"
         asg stat -i proc | egrep "DOWN|DETACHED"
-        g_all -a cphaprob state | grep "FSYNC, during_upgrade"
+        gexec -a -c "cphaprob state" | grep "FSYNC, during_upgrade"
       ignore_errors: true
       ignore_unreachable: true
       register: res
       changed_when: false
-    - name: "Debug / Check cphaprob"
+    - name: "Debug / Check cphaprob (before)"
       debug:
         msg:
           - "{{ item }} iteration (before), SMO_IP {{ res_smo_ip.stdout_lines }}"
           - "{{ res.stdout_lines }}"
   when: loglevel>=3
 
-- name: "Wait for all upgraded PNOTEs have state FSYNC, during_upgrade"
+- name: "Wait for all upgraded PNOTEs have state FSYNC, during_upgrade)"
   shell: |
     while [ $(asg stat -i all_ids | wc -l) -ne \
-      $(g_all -a cphaprob state | grep "Active PNOTEs" | wc -l) ] || \
+      $(gexec -a -c "cphaprob state" | grep "Active PNOTEs" | wc -l) ] || \
       [ $(asg stat -i proc | egrep -c "DOWN|DETACHED") -ne \
-      $(g_all -a cphaprob state | grep -c "FSYNC, during_upgrade") ]; \
+      $(gexec -a -c "cphaprob state" | grep -c "FSYNC, during_upgrade") ]; \
     do
       printf "."; sleep 10;
     done
@@ -50,17 +50,17 @@
       register: res_smo_ip
       changed_when: false
 
-    - name: "Check cphaprob"
+    - name: "Check cphaprob (all_ids; ACTIVE; DOWN|DETACHED; FSYNC, during_upgrade)"
       shell: |
         asg stat -i all_ids
-        g_all -a cphaprob state | grep "Active PNOTEs"
+        gexec -a -c "cphaprob state" | grep "Active PNOTEs"
         asg stat -i proc | egrep "DOWN|DETACHED"
-        g_all -a cphaprob state | grep "FSYNC, during_upgrade"
+        gexec -a -c "cphaprob state" | grep "FSYNC, during_upgrade"
       ignore_errors: true
       ignore_unreachable: true
       register: res
       changed_when: false
-    - name: "Debug / Check cphaprob"
+    - name: "Debug / Check cphaprob (after)"
       debug:
         msg:
           - "{{ item }} iteration (after), SMO_IP {{ res_smo_ip.stdout_lines }}"

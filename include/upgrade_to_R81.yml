@@ -79,13 +79,13 @@
   # ! Need better eror handling
 
 - name: "Upgrade to R81"
-  # ! 1 to replace with the calculated number of the package
   delegate_to: 127.0.0.1
   expect:
-    command: 'ssh -t ansible@{{ inventory_hostname }} member {{ logical_member }}'
+    command: >
+      ssh -t ansible@"{{ inventory_hostname }}" 'gclish -b {{ logical_member }}
+      -c "installer upgrade {{ pkg_index }} member_ids {{ logical_range }}"'
     responses:
       'password': "{{ ansible_ssh_pass }}"
-      '\:0]#': "gclish -c \"installer upgrade {{ pkg_index }} member_ids {{ logical_range }}\""
       'Do you want to continue': "y"
       'Are you sure': "y"
       'You are about to perform': "y"
@@ -129,7 +129,7 @@
       changed_when: false
 
     - name: "cphaprob stat"
-      shell: g_all cphaprob stat
+      shell: gexec -a -c "cphaprob stat"
       register: res
       changed_when: false
 

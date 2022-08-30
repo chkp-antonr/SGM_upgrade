@@ -14,7 +14,6 @@
       include_tasks: include/import_package.yml
       vars:
         package_name: "{{ pkg_upgrade_R81 }}"
-        logical_member: "{{ logicalAmember }}"
 
 ### Validate for memberA and memberB
 # Import to the specific member if needed (very rare, but...)

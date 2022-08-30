@@ -9,9 +9,8 @@
 - name: "Get package index"
   shell: >
     set -o pipefail &&
-    gexec -b "{{ logical_member }}" -c "da_cli packages_info status=available_for_install"
-    | cut -c 7- |
-    jq '[ .packages[] | .filename | startswith("{{ base_package_fn }}") ] | index(true)'
+    gexec -a -g0 -b "{{ logical_member }}" -c "da_cli packages_info status=available_for_install"
+    | jq '[ .packages[] | .filename | startswith("{{ base_package_fn }}") ] | index(true)'
   register: res
   ignore_errors: true
   changed_when: false

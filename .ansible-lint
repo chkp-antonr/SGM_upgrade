@@ -1,5 +1,6 @@
 skip_list:
   - 'fqcn-builtins'
   - command-instead-of-shell  # Use shell only when shell functionality is required.
+  - ignore-errors
 warn_list:  # or 'skip_list' to silence them completely
   - experimental  # all rules tagged as experimental

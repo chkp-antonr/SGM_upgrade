@@ -33,7 +33,8 @@
     - name: "Wait for all members are active"
       shell: |
         while [ $(asg stat -i active_ids | wc -l) -ne \
-        $(asg stat -i all_ids | wc -l) ];    do
+        $(asg stat -i all_ids | wc -l) ];
+        do
           printf "."; sleep 10;
         done
       changed_when: false

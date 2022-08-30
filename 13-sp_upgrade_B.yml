@@ -5,9 +5,29 @@
 
   tasks:
 
+    # - name: "Step 13 - Install R81 upgrade by switching to rangeB being on A"
+    #   # ! 1 to replace with the calculated number of the package
+    #   # g_all -b 1_1 doesn't provide TTY (only returns output), so use `memeber`
+    #   delegate_to: 127.0.0.1
+    #   expect:
+    #     command: >
+    #       ssh -t ansible@"{{ inventory_hostname }}" 'gexec -a -b "{{ logicalBmember }}"
+    #       -c "sp_upgrade"'
+    #     responses:
+    #       'password': "{{ ansible_ssh_pass }}"
+    #       'When done, enter': "y"
+    #       'Are you sure': "y"
+    #       'You are about to perform': "y"
+    #       'Enter your full name': "Ansible"
+    #       'Enter reason for': "Automated Upgrade"
+    #       'did not perform the upgrade yet': "n"
+    #     # timeout: 300
+    #     echo: true
+    #   register: res
+    #   ignore_errors: true
+    #   ignore_unreachable: true
+
     - name: "Step 13 - Install R81 upgrade by switching to rangeB being on A"
-      # ! 1 to replace with the calculated number of the package
-      # g_all -b 1_1 doesn't provide TTY (only returns output), so use `memeber`
       delegate_to: 127.0.0.1
       expect:
         command: 'ssh -t ansible@{{ inventory_hostname }} member {{ logicalBmember }}'
@@ -40,7 +60,8 @@
     - name: "Wait for FSYNC, during_upgrade on local member B"
       shell: |
         while [ $(asg stat -i proc | egrep -c "DOWN|DETACHED") -ne \
-        $(g_all -a cphaprob state | grep -c "FSYNC, during_upgrade") ];    do
+        $(g_all -a cphaprob state | grep -c "FSYNC, during_upgrade") ];
+        do
           printf "."; sleep 10;
         done
       changed_when: false
