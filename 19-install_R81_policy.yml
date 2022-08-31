@@ -8,6 +8,10 @@
 
   tasks:
 
+    - name: "Timestamp / Start Step 19 - Get policy from SMO, Install policy to all members"
+      include_tasks: ./include/print_datetime.yml
+      when: loglevel>=2
+
     - name: "Get policy name"
       shell: "set -o pipefail && fw stat | tail -1 | awk '{ print $2 }'"
       register: policy_name
@@ -68,3 +72,10 @@
           - "Enjoy R81 on {{ gw_name }} :)"
       ignore_errors: true
       when: loglevel>1
+
+    - name: "Debug / Restore smo image auto_clone on"
+      debug:
+        msg:
+          - "Reminder: Restore 'smo image auto-clone state on' when needed for modules initially reported:"
+          - "{{ auto_clone_smo }}"
+      when: auto_clone_smo != ""

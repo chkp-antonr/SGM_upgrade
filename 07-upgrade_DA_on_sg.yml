@@ -8,19 +8,37 @@
 
 
 ### Update DA
-    - name: "Step 7 - Download Deployment Agent to local repo"
-      get_url:
-        url: "{{ remote_repo }}/{{ da_R80 }}"
-        dest: "{{ local_repo }}"
-        mode: 0644
+    # - name: "Step 7 - Download Deployment Agent to local repo"
+    #   get_url:
+    #     url: "{{ remote_repo }}/{{ da_R80 }}"
+    #     dest: "{{ local_repo }}"
+    #     mode: 0644
 
-    - name: "Step 7 - Update Deployment Agent"
+    - name: "Timestamp / Start Step 7 - Upgrade the CPUSE Deployment Agent on the Security Group"
+      include_tasks: ./include/print_datetime.yml
+      when: loglevel>=2
+
+    - name: "Step 7 - Upload Deployment Agent to local repo on SMO"
+      delegate_to: 127.0.0.1
+      shell: |
+        sshpass -p "{{ ansible_ssh_pass }}" sftp "{{ ansible_ssh_user }}@{{ groups.sg[0] }}" <<EOF
+        lcd "{{ host_repo }}"
+        cd "{{ local_repo }}"
+        put "{{ package_name }}"
+        quit
+        EOF
+      changed_when: false
+      vars:
+        package_name: "{{ da_R80 }}"
+
+    - name: "Update Deployment Agent"
       shell: update_sp_da "{{ local_repo }}/{{ da_R80 }}"
       register: res
       changed_when: false
 
-    - name: "Debug / Update Deployment Agent"
+    - name: "Debug / Update Deployment Agent (07-upgrade_DA_on_sg.yml)"
       debug: msg="{{ res.stdout_lines }}"
+      when: loglevel>0
 
     - name: "Deployment Agent status build"
       shell: gclish -c "show installer status build"
@@ -28,5 +46,5 @@
       ignore_errors: true
       changed_when: false
 
-    - name: "Debug / Deployment Agent status build"
+    - name: "Debug / Deployment Agent status build (07-upgrade_DA_on_sg.yml)"
       debug: msg="{{ res_status.stdout_lines }}"

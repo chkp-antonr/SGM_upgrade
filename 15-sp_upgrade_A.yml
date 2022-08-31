@@ -7,13 +7,15 @@
 
 # ! wait for A rebooted
 
+    - name: "Timestamp / Start Step 15 - sp_upgrade for A (--continue on B)"
+      include_tasks: ./include/print_datetime.yml
+      when: loglevel>=2
+
     - name: "Step 15 - Continue R81 upgrade rangeB being on A"
-      # ! 1 to replace with the calculated number of the package
       delegate_to: 127.0.0.1
       expect:
-        command: 'ssh -t ansible@{{ inventory_hostname }} member {{ logicalBmember }}'
+        command: "sshpass -p {{ ansible_ssh_pass }} ssh -t {{ ansible_ssh_user }}@{{ inventory_hostname }} member {{ logicalBmember }}"
         responses:
-          'password': "{{ ansible_ssh_pass }}"
           '\:0]#': "sp_upgrade --continue; exit"
           'When done, enter': "y"
         timeout: 60
@@ -22,7 +24,7 @@
       ignore_errors: true
       ignore_unreachable: true
 
-    - name: "Debug / Upgrade A to R81"
+    - name: "Debug / Upgrade A to R81 (15-sp_upgrade_A.yml)"
       debug: msg="{{ res }}"
       when: loglevel>=3
 
@@ -42,6 +44,6 @@
       ignore_unreachable: true
       register: res
 
-    - name: "R81 installed successfully on all members!"
+    - name: "R81 installed successfully on all members! (15-sp_upgrade_A.yml)"
       include_tasks: ./include/print_datetime.yml
       when: loglevel>=2

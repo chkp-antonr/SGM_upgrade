@@ -1,54 +1,44 @@
 ---
 # https://sc1.checkpoint.com/documents/R81.10/WebAdminGuides/EN/CP_R81.10_Maestro_AdminGuide/Topics-Maestro-AG/Upgrading-Maestro-with-CPUSE.htm?tocpath=Upgrading%20Maestro%20to%20R81.10%7C_____1
 # add snapshot R8030SPa06 desc 06-install_JHF
-- name: "Step 6 - Install the required Take of the Jumbo Hotfix Accumulator"
+- name: "Step 20 - Install the Jumbo Hotfix Accumulator on top of R81.10"
   hosts: sg
   gather_facts: false
 
   tasks:
 
-### Prepare and clean
-
-    - name: "Timestamp / Start Step 6"
+    - name: "Timestamp / Start Step 20 - Install the Jumbo Hotfix Accumulator on top of R81.10"
       include_tasks: ./include/print_datetime.yml
       when: loglevel>=2
+
+
+### Prepare and clean
 
     - name: "remove usermode coredumps if exist"
       shell: g_all -a rm /var/log/dump/usermode/*
       changed_when: false
+      ignore_errors: true
 
     - name: "core_dump_verifier -v"
       shell: core_dump_verifier -v
       changed_when: false
+      ignore_errors: true
       register: res
 
     - name: "Debug / coredumps"
       debug: msg="{{ res.stdout_lines }}"
       when: loglevel>=2
 
-    - name: "fix trailing spaces in cp-release" # must be already done, but...
-      shell: g_all -a "sed -i 's/[ \t]*$//' /etc/cp-release"
-      changed_when: false
-
-    - name: "Translation result"
-      shell: set -o pipefail && g_all -a "echo '|$(cat /etc/cp-release)|'"
-      changed_when: false
-      register: res
-      when: loglevel>=2
-
-    - name: "Debug / No trailing spaces"
-      debug: msg="{{ res.stdout_lines }}"
-      when: loglevel>=2
-
 
 ### Start installation
 
-    - name: "Step 6 - Install JHF on B"
-      include_tasks: include/06-install_JHF.yml
+    - name: "Step 20 - Install the Jumbo Hotfix Accumulator on top of R81.10"
+      include_tasks: include/install_JHF.yml
       vars:
+        jhf: "{{ jhf_R81 }}"
         logical_member: "{{ logicalBmember }}"
         logical_range: "{{ logicalBrange }}"
-        is_first: true # validate on all SGMs
+        is_first: true # import and validate on all SGMs
 
     - name: "Timestamp / Installed on B"
       include_tasks: ./include/print_datetime.yml
@@ -59,19 +49,13 @@
 # potential performance degradation?
 
     - name: "Install JHF on A"
-      include_tasks: include/06-install_JHF.yml
+      include_tasks: include/install_JHF.yml
       vars:
+        jhf: "{{ jhf_R81 }}"
         logical_member: "{{ logicalAmember }}"
         logical_range: "{{ logicalArange }}"
-        is_first: false # validate only on specifed range
+        is_first: false # import and validate only on specifed range
 
     - name: "Timestamp / Installed on A"
       include_tasks: ./include/print_datetime.yml
       when: loglevel>=2
-
-  # - name: "Temporary stop"
-  #   meta: end_play
-
-# tail -f /opt/CPInstLog/DeploymentAgent.log
-# watch -n 2 asg stat -i sgm_info
-# watch -n 2 'asg stat -i proc | grep -A 5 "SGM ID"'

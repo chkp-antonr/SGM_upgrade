@@ -13,4 +13,4 @@ jhf_R80: Check_Point_R80_30SP_JHF_MAIN_Bundle_T101_FULL.tgz
 da_R80: DeploymentAgent_R80.30SP_000000027_1.tgz
 pkg_upgrade_R81: Check_Point_R81.10_T338_ScalablePlatform_Upgrade.tar
 # da_R81: DeploymentAgent_R81.tgz # sk173363
-jhf_R81: qq
+jhf_R81: Check_Point_R81_10_JUMBO_HF_MAIN_Bundle_T66_FULL.tar

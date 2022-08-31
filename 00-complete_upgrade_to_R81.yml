@@ -4,7 +4,7 @@
   import_playbook: 01-pre_checks.yml
 
 - name: "Install JHF"
-  import_playbook: 06-install_JHF_BA.yml
+  import_playbook: 06-R80-add_JHF.yml
 
 - name: "Upgrade Deployment Agent"
   import_playbook: 07-upgrade_DA_on_sg.yml
@@ -30,7 +30,8 @@
 - name: "Install R81 policy on both"
   import_playbook: 19-install_R81_policy.yml
 
-###
+- name: "Install JHF on top of R81.10"
+  import_playbook: 20-R81-add_JHF.yml
 
-# - name: ""
-#   import_playbook: 20-R81-add JHF.yml
+- name: "Install R81 policy on both after JHF"
+  import_playbook: 19-install_R81_policy.yml

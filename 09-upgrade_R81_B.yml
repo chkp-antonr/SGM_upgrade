@@ -6,13 +6,17 @@
 
   tasks:
 
+    - name: "Timestamp / Start Step 9 - Upgrade the Security Group Members in the Logical Group B"
+      include_tasks: ./include/print_datetime.yml
+      when: loglevel>=2
+
     - name: "Step 9 - Upgrade B to R81"
       include_tasks: include/upgrade_to_R81.yml
       vars:
         logical_member: "{{ logicalBmember }}"
         logical_range: "{{ logicalBrange }}"
 
-    - name: "Debug / Upgrade B to R81"
+    - name: "Debug / After Upgrade B to R81 (09-upgrade_R81_B.yml)"
       debug: msg="{{ res.stdout_lines }}"
       when: loglevel>=3
 

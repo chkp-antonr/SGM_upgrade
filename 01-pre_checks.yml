@@ -7,8 +7,9 @@
 
 ### Fix sftp Subsystem
 
-    # - name: "QQ"
-    #   include_tasks: include/wait_for_all_active.yml
+    - name: "Timestamp / Start Step 01 - pre-checks"
+      include_tasks: ./include/print_datetime.yml
+      when: loglevel>=2
 
     #  sed -i 's|^#Subsystem.*sftp.*|Subsystem      sftp    /usr/libexec/openssh/sftp-server|g' /etc/ssh/sshd_config; service sshd reload
     - name: "Step 1 - Fix sshd_config"

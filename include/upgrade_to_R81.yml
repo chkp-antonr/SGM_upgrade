@@ -20,9 +20,8 @@
 - name: "clusterXL down for the logical group"
   delegate_to: 127.0.0.1
   expect:
-    command: "ssh -t ansible@{{ inventory_hostname }} g_clusterXL_admin -b {{ logical_range }} down"
+    command: "sshpass -p {{ ansible_ssh_pass }} ssh -t {{ ansible_ssh_user }}@{{ inventory_hostname }} g_clusterXL_admin -b {{ logical_range }} down"
     responses:
-      'password': "{{ ansible_ssh_pass }}"
       'Are you sure': "y"
       'Enter your full name:': "Ansible"
       'Enter reason for': "Automated Upgrade"
@@ -68,24 +67,43 @@
   include_tasks: include/get_pkg_index.yml
   vars:
     package_file_name: "{{ pkg_upgrade_R81 }}"
-    # logical_member: "{{ Inherited from [09|14]-upgrade_R81-[A|B] }}"
+    # logical_member: "{{ Inherited }}"
 
 - name: "No package to install - break!"
   fail:
     msg:
-      - "Oops. No package to install on {{ logical_member }}!"
+      - "Oops. No package to install on {{ logical_range }}!"
       - "{{ pkg_upgrade_R81 }} missed"
   when: pkg_index | int == 0
   # ! Need better eror handling
+
+- name: "Verify installer (include/upgrade_to_R81.yml)"
+  shell: gclish -b "{{ logical_member }}" -c "installer verify {{ pkg_index }} {{ import_to_member }}"
+  register: res_verify
+  changed_when: false
+  ignore_errors: true
+
+# - name: "Verify installer (include/upgrade_to_R81.yml)"
+#   delegate_to: 127.0.0.1
+#   expect:
+#     command: "sshpass -p {{ ansible_ssh_pass }} ssh -t {{ ansible_ssh_user }}@{{ inventory_hostname }} member {{ logical_member }}"
+#     responses:
+#       '\:0]#': "gclish -c \"installer verify {{ pkg_index }} {{ import_to_member }}\"; exit"
+#   register: res_verify
+#   ignore_errors: true
+#   ignore_unreachable: true
+
+- name: "Debug / installer verify as is (include/upgrade_to_R81.yml)"
+  debug: msg="{{ res_verify }}"
+  when: loglevel>=3
 
 - name: "Upgrade to R81"
   delegate_to: 127.0.0.1
   expect:
     command: >
-      ssh -t ansible@"{{ inventory_hostname }}" 'gclish -b {{ logical_member }}
+      sshpass -p "{{ ansible_ssh_pass }}" ssh -t "{{ ansible_ssh_user }}@{{ inventory_hostname }}" 'gclish -b "{{ logical_member }}"
       -c "installer upgrade {{ pkg_index }} member_ids {{ logical_range }}"'
     responses:
-      'password': "{{ ansible_ssh_pass }}"
       'Do you want to continue': "y"
       'Are you sure': "y"
       'You are about to perform': "y"

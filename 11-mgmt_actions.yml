@@ -8,6 +8,10 @@
 
   tasks:
 
+    - name: "Timestamp / Start Step 11, 12 - Edit the Security Gateway object version, install policy"
+      include_tasks: ./include/print_datetime.yml
+      when: loglevel>=2
+
     - name: "Get policy name"
       shell: "set -o pipefail && fw stat | tail -1 | awk '{ print $2 }'"
       register: policy_name
@@ -37,7 +41,7 @@
       set_fact:
         gw_name: "{{ hostvars[groups.sg[0]]['gw_name'] }}"
 
-    - name: "Debug / Names"
+    - name: "Debug / Names (11-mgmt_actions.yml)"
       debug: msg="{{ policy_name }}@{{ gw_name }} in {{ domain_name }}"
       ignore_errors: true
       when: loglevel>0
@@ -67,7 +71,7 @@
       changed_when: false
       register: res
 
-    - name: "Debug / "
+    - name: "Debug / (11-mgmt_actions.yml)"
       debug: msg="Policy prepared {{ res.stdout_lines }}"
       ignore_errors: true
       when: loglevel>1

@@ -6,9 +6,9 @@
 
   tasks:
 
-    - name: "Step 8 - Debug / Prepare to import package"
-      debug: msg="Prepare to import package {{ pkg_upgrade_R81 }}"
-      when: loglevel>0
+    - name: "Timestamp / Start Step 8 - Import the R81.10 upgrade package on the Security Group"
+      include_tasks: ./include/print_datetime.yml
+      when: loglevel>=2
 
     - name: "Import package"
       include_tasks: include/import_package.yml
