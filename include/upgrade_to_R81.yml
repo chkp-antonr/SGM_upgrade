@@ -147,7 +147,7 @@
       changed_when: false
 
     - name: "cphaprob stat"
-      shell: gexec -a -c "cphaprob stat"
+      shell: gexec -a -f -c "cphaprob stat"
       register: res
       changed_when: false
 

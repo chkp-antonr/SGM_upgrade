@@ -31,7 +31,7 @@
 - name: "Debug / Package index to be installed"
   debug:
     msg:
-      - "Package index {{ pkg_index }} to be installed on {{ logical_range }}"
+      - "Package index {{ pkg_index }} to be installed on {{ import_to_member }}"
       - "{{ package_file_name }}"
   ignore_errors: true
   when:
