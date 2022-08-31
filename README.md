@@ -7,6 +7,7 @@
 Ansible host must have:
 
 - sshpass
+- jq
 
 ## Flow by steps
 
