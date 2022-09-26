@@ -1,0 +1,95 @@
+---
+# https://sc1.checkpoint.com/documents/R81.10/WebAdminGuides/EN/CP_R81.10_Maestro_AdminGuide/Topics-Maestro-AG/Upgrading-Maestro-with-CPUSE.htm?tocpath=Upgrading%20Maestro%20to%20R81.10%7C_____1
+# add snapshot R8030SPa06 desc 06-install_JHF
+- name: "Step 20 - Install the Jumbo Hotfix Accumulator on top of R81.10"
+  hosts: sg
+  gather_facts: false
+  vars:
+    jhf_R81: Check_Point_R81_10_JHF_QA_MAIN_Bundle_T172_FULL.tar
+
+  tasks:
+
+    - name: "Timestamp / Start Step 30 - Install JHF and configure Skyline"
+      include_tasks: ./include/print_datetime.yml
+      when: loglevel>=2
+
+### Prepare and clean
+
+    - name: "remove usermode coredumps if exist"
+      shell: g_all -a rm /var/log/dump/usermode/*
+      changed_when: false
+      ignore_errors: true
+
+    - name: "core_dump_verifier -v"
+      shell: core_dump_verifier -v
+      changed_when: false
+      ignore_errors: true
+      register: res
+
+    - name: "Debug / coredumps"
+      debug: msg="{{ res.stdout_lines }}"
+      when: loglevel>=2
+
+
+### Start installation
+
+    - name: "Step 20 - Install the Jumbo Hotfix Accumulator on top of R81.10"
+      include_tasks: include/install_JHF.yml
+      vars:
+        jhf: "{{ jhf_R81 }}"
+        logical_member: "{{ logicalBmember }}"
+        logical_range: "{{ logicalBrange }}"
+        is_first: true # import and validate on all SGMs
+
+    - name: "Timestamp / Installed on B"
+      include_tasks: ./include/print_datetime.yml
+      when: loglevel>=2
+
+# ! I prefer more waiting
+# as console at B doesn't show login prompt when B becomes ACTIVE
+# potential performance degradation?
+
+    - name: "Install JHF on A"
+      include_tasks: include/install_JHF.yml
+      vars:
+        jhf: "{{ jhf_R81 }}"
+        logical_member: "{{ logicalAmember }}"
+        logical_range: "{{ logicalArange }}"
+        is_first: false # import and validate only on specifed range
+
+    - name: "Timestamp / Installed on A"
+      include_tasks: ./include/print_datetime.yml
+      when: loglevel>=2
+
+# Add config
+    - name: "Confugre and start"
+      block:
+
+        - name: "Copy config to SMO"
+          copy:
+            src: include/skyline-config.yaml
+            dest: /tmp/config.yaml
+            mode: 0664
+
+        - name: "get SMO_IP"
+          shell: hostname -i
+          register: res
+          changed_when: false
+
+        - name: "Store SMO_IP"
+          set_fact:
+            smo_ip: "{{ res.stdout }}"
+
+        - name: "Clone config"
+          shell: gexec -c "scp {{ smo_ip }}:/tmp/config.yaml /opt/CPotelcol/config.yaml"
+          changed_when: false
+
+        - name: "Restart skyline"
+          shell: gexec -c "{{ item }}"
+          changed_when: false
+          loop:
+            - /opt/CPviewExporter/stop
+            - /opt/CPviewExporter/start
+            - /opt/CPotelcol/stop
+            - /opt/CPotelcol/start
+      tags: skyline_config

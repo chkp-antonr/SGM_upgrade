@@ -1,0 +1,28 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        transport: unix
+        endpoint: /opt/CPotelcol/grpc_otlp.sock
+
+exporters:
+  prometheusremotewrite:
+    endpoint: "http://ubuK8s-cp.il.cparch.in:30042/api/v1/write"
+    external_labels:
+     environment: spACI
+    resource_to_telemetry_conversion:
+      enabled: true
+
+processors:
+  batch:
+
+extensions:
+  health_check:
+
+service:
+  extensions: [health_check]
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [prometheusremotewrite] # Need to stay empty - So we can enable/disable using a dynamic configuration

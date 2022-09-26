@@ -8,7 +8,7 @@
 
   tasks:
 
-gclish -c "show smo image auto-clone state"
+# gclish -c "show smo image auto-clone state"
 
     - name: "Prepare SG"
       block:
