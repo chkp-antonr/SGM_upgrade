@@ -4,9 +4,10 @@
   hosts: sg
   vars:
     log: "/tmp/pre_checks.log"
-  tasks:
+  environment:
+    BASH_ENV: /etc/profile
 
-###
+  tasks:
 
     - name: "Timestamp / pre_checks-log start"
       include_tasks: ./include/print_datetime.yml
@@ -63,6 +64,7 @@
     - name: "Show log"
       delegate_to: 127.0.0.1
       shell: "cat {{ log }}"
+      changed_when: false
       register: res
 
     # - name: "Debug / Collect"
@@ -79,4 +81,3 @@
     # - name: "Debug / Collect expert"
     #   debug: msg="{{ res }}"
     #   when: loglevel>0
-
