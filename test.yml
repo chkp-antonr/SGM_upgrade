@@ -1,80 +1,34 @@
 ---
 - name: "Test"
   gather_facts: false
-  hosts: sg
-  vars:
-    is_first: true
-    logical_range: "1_2"
-  #   ansible_ssh_user: "{{mds_ssh_user}}"
-  #   ansible_ssh_pass: "{{mds_ssh_pass}}"
+  hosts: sgt
+  environment:
+    BASH_ENV: /etc/profile
 
   tasks:
-  # - name: "Debug / "
-  #   debug:
-  #     msg:
-  #       - "{{ hostvars[inventory_hostname] }}"
-  #       - "{{ inventory_hostname }}"
-
-    - name: "Restart sshd"
-      raw: g_all -a "service sshd reload"
-      register: res
 
     - name: New SSH session
       meta: reset_connection
 
-    - name: "get SMO_IP"
-      shell: hostname -i
-      register: res
-      changed_when: false
-      ignore_unreachable: true
-
-    - name: "Debug / SMO_IP just before JHF install"
-      debug:
-        msg: "{{ res.stdout }}"
+    - name: "Check"
+      shell: |
+        echo $PATH 
+        which clish 
+        which g_all 
+        which jq
       ignore_errors: true
-      when: loglevel>1
-
-    - name: "Temporary stop"
-      meta: end_play
-
-    - name: "Print date"
-      include_tasks: include/print_datetime.yml
-      when: loglevel>=1
-
-    #  sed -i 's|^#Subsystem.*sftp-server|Subsystem      sftp    /usr/libexec/openssh/sftp-server|g' /etc/ssh/sshd_config; service sshd restart
-    - name: "Fix sshd_config"
-      # `lineinfile` is for a single member, need g_all
-      raw: g_all -a "sed -i 's|^#Subsystem.*sftp.*|Subsystem sftp /usr/libexec/openssh/sftp-server|g' /etc/ssh/sshd_config"
       register: res
 
-    - name: "Validate sshd_config"
-      raw: g_all -a "grep Subsystem /etc/ssh/sshd_config"
-      register: res
+    - name: "Debug / "
+      debug:
+        msg:
+          - "stdout_lines"
+          - "{{ res.stdout_lines|default('') }}"
+          - "stderr_lines"
+          - "{{ res.stderr_lines|default('') }}"
+          - "{{ (ansible_env|default({})).PATH|default('') }}"
 
-    - name: "Debug"
-      debug: msg="{{ res.stdout_lines }}"
-      when: loglevel>=1
 
-    - name: "Restart sshd"
-      raw: g_all -a "service sshd reload"
-      register: res
-
-    - name: New SSH session
-      meta: reset_connection
-
-    - name: "get SMO_IP"
-      shell: hostname -i
-      register: res
-      changed_when: false
-      ignore_unreachable: true
-
-    - name: "Store SMO_IP"
-      set_fact:
-        smo_ip: "{{ res.stdout }}"
-
-    - name: "Print date"
-      include_tasks: include/print_datetime.yml
-      when: loglevel>=1
-
-    # - name: "Temporary stop"
-    #   meta: end_play
+# [Expert@gw8020:0]# cat /home/admin/python
+# #!/bin/bash
+# /opt/CPsuite-R8*/fw1/Python/bin/python $*

@@ -2,7 +2,9 @@
 # General settings
 ansible_ssh_common_args: '-o ServerAliveInterval=5 -o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null -oKexAlgorithms=+diffie-hellman-group-exchange-sha1,diffie-hellman-group14-sha1 -oHostKeyAlgorithms=+ssh-rsa,ssh-dss'
 ansible_ssh_timeout: 60
-ansible_python_interpreter: "/opt/CPsuite-R8*/fw1/Python/bin/python"
+#ansible_python_interpreter: "/opt/CPsuite-R8*/fw1/Python/bin/python"
+ansible_python_interpreter: "/home/admin/python"
+ansible_ssh_transfer_method: piped
 ansible_user: ansible
 wait_for_reboot_timeout: 3600
 loglevel: 3 # 0 - silent; 1 - normal; 2 - print timestamps and some more; 3 - max

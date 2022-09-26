@@ -1,0 +1,89 @@
+
+watch -n 2 asg stat -i sgm_info
+watch -n 2 'asg stat -i proc | grep -A 5 "SGM ID"'
+watch "g_all -a cphaprob stat | grep 'Active PNOTE'"
+
+set static-route 192.168.168.0/24 nexthop gateway address 172.23.23.168 priority 1 on
+set static-route 192.168.16.0/24 nexthop gateway address 172.23.23.168 priority 1 on
+bonding:group:1:type
+add bonding group 1 interface eth1-53
+add bonding group 1 interface eth2-53
+set bonding group 1 mode 8023AD
+set bonding group 1 lacp-rate slow
+set bonding group 1 mii-interval 100
+set bonding group 1 down-delay 200
+set bonding group 1 up-delay 200
+set bonding group 1 xmit-hash-policy layer2
+set interface bond1 ipv4-address 192.254.254.254 mask-length 32
+set interface bond1 state on
+add interface bond1 vlan 100
+set interface bond1.100 state on
+set interface bond1.100 ipv4-address 192.168.1.100 mask-length 24
+
+
+[Expert@cti-ch01-02:0]# asg diag list 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30
+--------------------------------------------------------------------------
+| ID | Title              | Command                                      |
+--------------------------------------------------------------------------
+| System Components                                                      |
+--------------------------------------------------------------------------
+|  1 | System Health      | asg stat -v                                  |
+|  2 | Resources          | asg resource                                 |
+|  3 | Software Provision | asg_provision                                |
+|  4 | Media Details      | transceiver_verifier -v                      |
+|  5 | SSD Health         | asg resource --ssd                           |
+|  6 | Firmware Verifier  | firmware_verifier -v                         |
+--------------------------------------------------------------------------
+| Policy and Configuration                                               |
+--------------------------------------------------------------------------
+|  7 | Distribution Mode  | distutil verify -v                           |
+|  8 | DXL Balance        | dxl stat                                     |
+|  9 | Policy             | asg policy verify -a                         |
+| 10 | AMW Policy         | asg policy verify_amw -a                     |
+| 11 | SWB Updates        | asg_swb_update_verifier -v                   |
+| 12 | Installation       | installation_verify                          |
+| 13 | Security Group     | security_group_util diag                     |
+| 14 | Cores Distribution | cores_verifier                               |
+| 15 | Clock              | clock_verifier -v                            |
+| 16 | Licenses           | asg_license_verifier -v                      |
+| 17 | IPS Enhancement    | asg_ips_enhance status                       |
+| 18 | Configuration File | config_verify -v                             |
+--------------------------------------------------------------------------
+| Networking                                                             |
+--------------------------------------------------------------------------
+| 19 | MAC Setting        | mac_verifier -v                              |
+| 20 | ARP Consistency    | asg_arp -v                                   |
+| 21 | Bond               | asg_bond -v                                  |
+| 22 | IPv4 Route         | asg_route                                    |
+| 23 | IPv6 Route         | asg_route -6                                 |
+| 24 | Dynamic Routing    | asg_dr_verifier                              |
+| 25 | Local ARP          | asg_local_arp_verifier -v                    |
+| 26 | IGMP Consistency   | asg_igmp                                     |
+| 27 | PIM Neighbors      | asg_pim_neighbors                            |
+--------------------------------------------------------------------------
+| Misc                                                                   |
+--------------------------------------------------------------------------
+| 28 | Core Dumps         | core_dump_verifier -v                        |
+| 29 | Processes          | asg_process_verifier -v                      |
+| 30 | Performance hogs   | asg_perf_hogs                                |
+--------------------------------------------------------------------------
+| Run "asg diag print <TestNum>" to display test verbose output          |
+--------------------------------------------------------------------------
+
+
+Links:
+https://opensource.com/article/21/4/process-json-data-ansible
+
+http://www.freekb.net/Article?id=2417
+---
+- hosts: localhost
+  gather_facts: false
+  vars:
+    fruit:
+     - apple
+     - banana
+     - orange
+     - grapes
+  tasks:
+  - debug:
+      msg: "banana index number = {{ lookup('ansible.utils.index_of', fruit, 'regex', 'banana') }}"

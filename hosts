@@ -6,3 +6,14 @@
 [sg]
 172.23.23.29
 # ansible_ssh_user=admin ansible_ssh_pass=
+
+[sgt]
+10.202.1.59 ansible_ssh_pass=vpn123
+#ansible_ssh_user=admin ansible_ssh_pass=Zubur1
+#ansible_python_interpreter=/home/admin/python
+
+[MHO]
+172.23.23.186 ansible_ssh_user=admin ansible_ssh_pass=zubur1 ansible_python_interpreter="/opt/CPsuite-R8*/fw1/Python/bin/python"
+
+[skyline]
+172.23.23.29 type=sg
