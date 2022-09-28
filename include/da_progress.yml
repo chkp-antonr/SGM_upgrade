@@ -1,0 +1,26 @@
+# https://github.com/ansible/ansible/issues/46203#issuecomment-556013701
+- name: 'Wait until success'
+  block:
+    - name: Set the retry count
+      set_fact:
+        retry_count: "{{ 0 if retry_count is undefined else retry_count|int + 1 }}"
+
+    - name: "verify package progress"
+      shell:  sleep "{{ delay }}"; da_cli get_status_of_action actionID="{{ id }}" | jq '.Progress + "% " + .Status'
+      changed_when: false
+      register: res_verify
+      failed_when: res_verify.stdout|default("") is not search("success") # job_status.json.message in ['Finished', 'Failed']
+  rescue:
+    - name: "resque fail"
+      fail:
+        msg:
+          - "Too main retries"
+          - "{{ res_verify.stdout }}"
+      when: retry_count|int == max_retries
+      # when: loglevel>=3
+
+    - name: "rescue debug"
+      debug: msg="{{ res_verify.stdout }}"
+      when: loglevel>=3
+
+    - include_tasks: da_progress.yml

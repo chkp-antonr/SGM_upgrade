@@ -62,7 +62,7 @@
       when: loglevel>=2
 
 # Add config
-    - name: "Confugre and start"
+    - name: "Configure and start"
       block:
 
         - name: "Copy config to SMO"
@@ -92,4 +92,4 @@
             - /opt/CPviewExporter/start
             - /opt/CPotelcol/stop
             - /opt/CPotelcol/start
-      tags: skyline_config
+      tags: configure

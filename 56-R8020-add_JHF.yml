@@ -1,0 +1,255 @@
+---
+# https://sc1.checkpoint.com/documents/R81.10/WebAdminGuides/EN/CP_R81.10_Maestro_AdminGuide/Topics-Maestro-AG/Upgrading-Maestro-with-CPUSE.htm?tocpath=Upgrading%20Maestro%20to%20R81.10%7C_____1
+# add snapshot R8030SPa06 desc 06-install_JHF
+- name: "Step 56 - Install the required Take of the Jumbo Hotfix Accumulator R80.20"
+  hosts: sg
+  gather_facts: false
+  environment:
+    BASH_ENV: /etc/profile
+  vars:
+    jhf: Check_Point_R80_30SP_JHF_MAIN_Bundle_T101_FULL.tgz
+
+  tasks:
+
+    - name: "Timestamp / Start Step 56 - Install the required Take of the Jumbo Hotfix Accumulator"
+      include_tasks: ./include/print_datetime.yml
+      when: loglevel>=2
+
+
+### Prepare and clean
+
+    - name: "remove usermode coredumps if exist"
+      shell: g_all -a rm /var/log/dump/usermode/*
+      changed_when: false
+      ignore_errors: true
+
+    - name: "core_dump_verifier -v"
+      shell: core_dump_verifier -v
+      changed_when: false
+      ignore_errors: true
+      register: res
+
+    - name: "Debug / coredumps"
+      debug: msg="{{ res.stdout_lines }}"
+      when: loglevel>=2
+
+
+### Start installation
+
+# - create snapshots
+
+    - name: "Transfer package"
+      block:
+        - name: "Create local repo dir"
+          file:
+            path: "{{ local_repo }}"
+            state: directory
+            mode: 0777
+
+        - name: "copy hotfix to the smo from file distribution server"
+          copy:
+            src: "{{ host_repo }}/{{ jhf }}"
+            dest: "{{ local_repo }}"
+            mode: 0664
+      tags: transfer
+
+    # - name: "Set base_package_fn"
+    #   set_fact:
+    #     base_package_fn: "{{ jhf_R8020[:-4] }}"
+        # to avoid mess with tar and tgz
+
+    - name: "import hotfix with cpuse"
+      block:
+        - name: "Check if already imported"
+          shell: >
+            set -o pipefail &&
+            da_cli package_info package="{{ jhf }}" | grep -c "displayName"
+          register: res_exist
+          changed_when: false
+          ignore_errors: true
+
+        # - name: "Debug / "
+        #   debug: msg="{{ res_exist.stdout }}"
+        #   when: loglevel>=2
+
+        - name: "Import if not exists"
+          block:
+            - name: "Import"
+              shell: >
+                set -o pipefail &&
+                da_cli import package="{{ jhf }}" location="{{ local_repo }}"
+              register: res
+              changed_when: false
+              ignore_errors: true
+
+            - name: "Debug / Imported (56-R8020-add_JHF.yml)"
+              debug: msg="{{ res.stdout_lines }}"
+              when: loglevel>=2
+          when: res_exist.stdout|int == 0
+      tags: import
+
+
+# pre-check (for example: BGP…)
+
+    - name: "Install"
+      block:
+
+        - name: "disable smo image auto-clone feature - save config"
+          shell: |
+            gclish -c "set smo image auto-clone state off"
+            gclish -c "save config"
+          changed_when: false
+          register: res
+
+        - name: "Debug / smo image autoclone"
+          debug: msg="{{ res.stdout_lines }}"
+          when: loglevel>=2
+
+        - name: "verify package"
+          shell: da_cli verify package="{{ jhf }}" | jq '."Action ID"'
+          changed_when: false
+          register: res
+
+        - name: "set Action ID"
+          set_fact:
+            action_id: "{{ res.stdout[1:-1] }}"
+            res_verify: ""
+
+        - name: "Debug / Action ID"
+          debug: msg="Action ID = {{ action_id }}"
+          when: loglevel>=3
+
+        - name: "verify package progress"
+          include_tasks: ./include/da_progress.yml
+          vars:
+            delay: 1
+            max_retries: 50
+            id: "{{ action_id }}"
+          register: res
+
+        - name: "Debug / verify package completed"
+          debug:
+            msg:
+              - "{{ res_verify.stdout }}"
+
+
+        # - name: "verify package progress"
+        #   shell: da_cli get_status_of_action actionID="{{ action_id }}" | jq '.Progress + "% " + .Status'
+        #   changed_when: false
+        #   register: res
+        #   until: res is search("success")
+        #   retries: 60
+        #   delay: 1
+        #   # until "Progress" : "100", "Status" : "success"
+
+        - name: "Install package"
+          shell: da_cli install package="{{ jhf }}" | jq '."Action ID"'
+          changed_when: false
+          register: res
+
+        - name: "set Action ID"
+          set_fact:
+            action_id: "{{ res.stdout[1:-1] }}"
+            res_verify: ""
+
+        - name: "Debug / Action ID"
+          debug:
+            msg:
+              - "Expect retries until completed and reboot."
+              - "Progress can be tracked in other terminal with"
+              - "da_cli get_status_of_action actionID={{ action_id }}"
+          when: loglevel>=2
+
+        - name: "verify package progress"
+          include_tasks: ./include/da_progress.yml
+          vars:
+            delay: 30
+            max_retries: 100
+            id: "{{ action_id }}"
+          register: res
+
+        - name: "Debug / install package completed"
+          debug: msg="{{ res_verify.stdout }}"
+
+
+        # - name: "Debug / "
+        #   debug: msg="{{ res_exist.stdout }}"
+        #   when: loglevel>=2
+      tags: install
+
+# cat <<EOF
+# {
+#    "Action ID" : "4",
+#    "Message" : "verify command delivered to service.",
+#    "Package" : "Check_Point_R80_30SP_JHF_MAIN_Bundle_T101_FULL.tgz"
+# }
+# EOF
+
+
+# cat <<EOF | jq '.[] | (.Progress)'
+# {
+#    "Action ID" : "4",
+#    "Action Type" : "Verify",
+#    "DAService State" : "ready",
+#    "ExtendedMessage" : "N/A",
+#    "Message" : "{\"clean-install\":{\"applicable\":false,\"messages\":null,\"success\":false},\"install\":{\"applicable\":true,\"messages\":[{\"message-code\":\"OK\",\"text\":\"Installation is allowed.\"}],\"success\":true},\"upgrade\":{\"applicable\":false,\"messages\":null,\"success\":false}}",
+#    "Package" : "Check_Point_R80_30SP_JHF_MAIN_Bundle_T101_FULL.tgz",
+
+# }
+# EOF
+
+      # shell: >
+      #   gexec -a -g0 -c 'da_cli packages_info'
+      #   | jq '[ .packages[] | select(.filename | startswith("{{ base_package_fn }}")) | .state ]' | grep -c "Installed";
+      #   asg stat -i all_ids | wc -l
+
+#       shell: >
+#         set -o pipefail &&
+#         da_cli packages_info | jq '[ .packages[] | select(.filename | startswith("{{ base_package_fn }}")) | .state ]' | grep -c "Installed";
+
+# da_cli packages_info | jq '[ .packages[] | select(.filename | startswith("Check_Point_R80_30SP_JHF_MAIN_Bundle_T101_FULL")) | .state ]' | grep -c "Installed";
+
+
+# da_cli import package=Check_Point_R80_30SP_JHF_MAIN_Bundle_T101_FULL.tgz location=/tmp/Upgrade
+
+# install hotfix to the SGM1 (aka SMO)
+# check the updated SGM1 (for example: BGP …)
+# Re-customize the content of cli.sh
+# enable smo image auto-clone feature (save config)
+# reboot one-by-one SGMs (for example: SGM2 after that SGM3…)
+# post-checkout, check license all members
+
+
+    - name: "Temporary stop"
+      meta: end_play
+
+
+### old
+
+    - name: "Step 6 - Install the required Take of the Jumbo Hotfix Accumulator"
+      include_tasks: include/install_JHF-R8020.yml
+      vars:
+        jhf: "{{ jhf_R80 }}"
+        logical_member: "{{ logicalBmember }}"
+        logical_range: "{{ logicalBrange }}"
+        is_first: true # import and validate on all SGMs
+
+    - name: "Timestamp / Installed on B"
+      include_tasks: ./include/print_datetime.yml
+      when: loglevel>=2
+
+# ! I prefer more waiting
+# as console at B doesn't show login prompt when B becomes ACTIVE
+# potential performance degradation?
+
+    - name: "Install JHF on A"
+      include_tasks: include/install_JHF-R8020.yml
+      vars:
+        jhf: "{{ jhf_R80 }}"
+        logical_member: "{{ logicalAmember }}"
+        logical_range: "{{ logicalArange }}"
+        is_first: false # import and validate only on specifed range
+
+    - name: "Timestamp / Installed on A"
+      include_tasks: ./include/print_datetime.yml
+      when: loglevel>=2

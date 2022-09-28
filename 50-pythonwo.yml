@@ -1,0 +1,79 @@
+---
+- name: "-= Python repair =-"
+  gather_facts: no
+  hosts: sg
+  environment:
+    BASH_ENV: /etc/profile
+  vars:
+    ansible_python_interpreter: "/opt/CPsuite-R8*/fw1/Python/bin/python"
+    # ansible_ssh_user: "{{ ansible_user }}"
+    # ansible_ssh_pass: "{{ ansible_pass }}"
+
+  tasks:
+
+    - name: "Waiting for MHO"
+      wait_for_connection:
+        delay: 1
+        timeout: 600
+
+    - name: "Python checking"
+      raw: cat ~/.bashrc
+      register: pycheck
+      changed_when: false
+
+    - name: "Python Path settings"
+      raw: echo "unset PYTHONPATH" >> ~/.bashrc
+      when: pycheck.stdout is not search("unset PYTHONPATH")
+
+    - name: "Python Home settings"
+      raw: echo "unset PYTHONHOME" >> ~/.bashrc
+      when: pycheck.stdout is not search("unset PYTHONHOME")
+
+    - name: "Create python bash script"
+      copy:
+        dest: "/tmp/python"
+        content: |
+          #!/bin/bash
+          /opt/CPsuite-R8*/fw1/Python/bin/python $*
+        mode: 0755
+
+    - name:
+      raw: "/opt/CPsmo-R8*/bin/g_cp2blades /tmp/python /home/admin/python"
+      changed_when: false
+      ignore_errors: true
+    #   register: res
+
+    # - name: "Debug / "
+    #   debug:
+    #     msg:
+    #       - "{{ res }}"
+
+
+###
+
+- name: "Test new python"
+  gather_facts: false
+  hosts: sg
+  environment:
+    BASH_ENV: /etc/profile
+
+  tasks:
+
+    - name: "Check"
+      shell: |
+        echo $PATH
+        which clish
+        which jq
+        which clusterXL_admin
+        which g_clusterXL_admin
+      ignore_errors: true
+      register: res
+
+    - name: "Debug / "
+      debug:
+        msg:
+          - "stdout_lines"
+          - "{{ res.stdout_lines|default('') }}"
+          - "stderr_lines"
+          - "{{ res.stderr_lines|default('') }}"
+          - "{{ (ansible_env|default({})).PATH|default('') }}"

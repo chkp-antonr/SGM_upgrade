@@ -1,0 +1,85 @@
+---
+- name: "Step 51 - R80.20 pre-checks - log pre-upgrade state"
+  gather_facts: false
+  hosts: sg
+  vars:
+    log: "/tmp/pre_checks.log"
+  environment:
+    BASH_ENV: /etc/profile
+
+  tasks:
+
+# set smo image auto-clone state on
+
+    - name: "Timestamp / 51 - R80.20 pre-checks start"
+      include_tasks: ./include/print_datetime.yml
+      when: loglevel>=2
+
+    - name: "Clear log"
+      file:
+        path: "{{ log }}"
+        state: absent
+
+    - name: "collect data in expert mode"
+      shell: "printf '\n\n\n-=[ {{ item }} ]=-\n\n' >> {{ log }}; {{ item }} >> {{ log }}"
+      register: res
+      changed_when: false
+      ignore_errors: true
+      loop:
+        - asg_serial_info
+        # - asg_ifconfig
+        # - asg_cores_util
+        # - asg diag print
+        # - asg diag verify
+        # - asg diag list
+        # - fw tab -t connections -s
+        # - fwaccel conns
+        # - cplic print -x
+        # - g_all asg if
+        # - g_all ips stat
+
+        # How to terminate?
+        # - asg perf -v -p
+
+    - name: "collect data in expert mode"
+      shell: "printf '\n\n\n-=[ {{ item }} ]=-\n\n' >> {{ log }}; gclish -a -c \"{{ item }}\" >> {{ log }}"
+      register: res
+      changed_when: false
+      ignore_errors: true
+      loop:
+        - show uptime
+        # - show version all
+        # - show installer packages
+        # - show cluster state
+        # - show cluster members interfaces all
+        # - show bgp peers
+        # - show bgp peers advertise
+        # - show bgp peers received
+        # - show configuration
+
+    - name: "Fetch log to the local maching"
+      fetch:
+        src: "{{ log }}"
+        dest: "{{ log }}"
+        flat: true
+
+    - name: "Show log"
+      delegate_to: 127.0.0.1
+      shell: "cat {{ log }}"
+      changed_when: false
+      register: res
+
+    - name: "Debug / Collect"
+      debug: msg="{{ res.stdout_lines }}"
+      when: loglevel>2
+
+    - name: "Timestamp / 51 - R80.20 pre-checks end"
+      include_tasks: ./include/print_datetime.yml
+      when: loglevel>=2
+
+    # - name: "Temporary stop"
+    #   meta: end_play
+
+    # - name: "Debug / Collect expert"
+    #   debug: msg="{{ res }}"
+    #   when: loglevel>0

@@ -1,0 +1,122 @@
+---
+- name: "Step 30 - Install JHF and configure Skyline on MHO"
+  gather_facts: false
+  serial: 1 # host after
+  hosts: MHO
+  vars:
+    jhf: Check_Point_R81_10_JHF_QA_MAIN_Bundle_T172_FULL.tar
+
+  tasks:
+
+    - name: "Timestamp / Start Step 30 - Install JHF and configure Skyline on MHO"
+      include_tasks: ./include/print_datetime.yml
+      when: loglevel>=2
+
+    - name: "Transfer package"
+      block:
+        - name: "Create local repo dir"
+          file:
+            path: "{{ local_repo }}"
+            state: directory
+            mode: 0777
+
+        - name: "Transfer skyline JHF"
+          copy:
+            src: "{{ host_repo }}/{{ jhf }}"
+            dest: "{{ local_repo }}"
+            mode: 0644
+      tags: transfer
+
+    - name: "Import package"
+      block:
+
+        - name: "lock database override"
+          shell: clish -c "lock database override"
+          register: res
+          changed_when: false
+          failed_when:
+            - "'CLICMD0201' not in res.stdout"
+
+        - name: "Debug / lock database override (30-R81-add_JHF-skyline-MHO.yml)"
+          debug: msg="{{ res.stdout_lines }}"
+          when: loglevel>=2
+
+        - name: "Import package"
+          shell: clish -c "installer import local {{ local_repo }}/{{ jhf }}"
+          register: res
+          changed_when: false
+          ignore_errors: true
+
+        - name: "Debug / Import package (30-R81-add_JHF-skyline-MHO.yml)"
+          debug: msg="{{ res.stdout_lines }}"
+          when: loglevel>0
+
+        - name: "Show packages"
+          shell: clish -c "show installer packages"
+          register: res
+          changed_when: false
+          ignore_errors: true
+
+        - name: "Debug / Show packages (30-R81-add_JHF-skyline-MHO.yml)"
+          debug: msg="{{ res.stdout_lines }}"
+          when: loglevel>0
+
+        # - name: "Verify package"
+        #   shell: clish -c "installer verify 1"
+        #   register: res
+        #   changed_when: false
+        #   ignore_errors: true
+      tags: import
+
+    - name: "Install package"
+      block:
+
+        - name: "lock database override"
+          shell: clish -c "lock database override"
+          register: res
+          changed_when: false
+          failed_when:
+            - "'CLICMD0201' not in res.stdout"
+
+        - name: "Debug / lock database override (30-R81-add_JHF-skyline-MHO.yml)"
+          debug: msg="{{ res.stdout_lines }}"
+          when: loglevel>=2
+
+        - name: "Install package"
+          shell: echo "Y" | clish -c "installer install 1"
+          register: res
+          changed_when: false
+          ignore_errors: true
+
+        - name: "Debug / Install package (30-R81-add_JHF-skyline-MHO.yml)"
+          debug: msg="{{ res.stdout_lines }}"
+          when: loglevel>0
+      tags: install
+
+
+    - name: "Configure and start"
+      block:
+
+        - name: "Copy config"
+          copy:
+            src: include/skyline-config.yaml
+            dest: /opt/CPotelcol/config.yaml
+            mode: 0664
+
+        - name: "Restart skyline"
+          shell: "{{ item }}"
+          changed_when: false
+          ignore_errors: true
+          loop:
+            - /opt/CPviewExporter/stop
+            - /opt/CPviewExporter/start
+            - /opt/CPotelcol/stop
+            - /opt/CPotelcol/start
+      tags: configure
+
+# /opt/CPotelcol/config.yaml
+
+    # - name: "Debug / "
+    #   debug:
+    #     msg:
+    #       - "stdout_lines"

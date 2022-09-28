@@ -64,3 +64,13 @@
   # core_dump_verifier -v  - verifies no cores were dumped
   # core_dump_verifier -c  - deletes all usermode core dump files
   # core_dump_verifier -k  - deletes all kernel core dump files
+
+# ! ToDO
+
+# .ssh/config
+# Host *
+#     StrictHostKeyChecking no
+#     userknownhostsfile /dev/null
+
+# asg_cp2blades
+# g_cp
