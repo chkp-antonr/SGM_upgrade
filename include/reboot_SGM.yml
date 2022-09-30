@@ -1,0 +1,50 @@
+- name: "Debug / SGM candidate to reboot (include/reboot_SGM.yml)"
+  debug:
+    msg:
+      - "Candidate to reboot SGM {{ item | trim }}"
+      - "Waiting for all SGMs active and running other checks"
+
+- name: "Clear skip_reboot flag"
+  set_fact:
+    skip_reboot: false
+
+- name: "Check if reboot is needed"
+  shell: gexec -b "{{ item | trim }}" -g -c "cpinfo -y all" | grep -A 2 SMO | grep Take | cut -d ':' -f2
+  changed_when: false
+  ignore_errors: true
+  register: res
+
+- name: "Set skip_reboot to True if Take is already installed"
+  set_fact:
+    skip_reboot: true
+  when: res.stdout | int == jhf_R80_take | int
+
+- name: "If need to reboot"
+  block:
+
+    - name: "Wait for all Active"
+      shell: while [ $(asg stat -i sgm_info | grep -c Inactive) -ne 0 ]; do printf "."; sleep 10; done
+      changed_when: false
+      ignore_errors: true
+      ignore_unreachable: true
+      register: res
+
+  ### Validate if OK before each SMG reboot
+    - name: "Validate SGM state if OK to move forward"
+      include_tasks: validate_state.yml
+
+    - name: "Debug / SGM reboot is required (include/reboot_SGM.yml)"
+      debug:
+        msg:
+          - "SGM {{ item }} reboot is required. Ready?"
+
+    - name: "Pause"
+      include_tasks: pause.yml
+
+    - name: "Reboot SGM"
+      # shell: gexec -b "{{ item }}" -c "echo reboot"; sleep 1
+      shell: gexec -b "{{ item }}" -c "reboot"; sleep 15
+      changed_when: false
+      ignore_errors: true
+
+  when: not skip_reboot

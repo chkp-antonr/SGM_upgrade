@@ -1,0 +1,51 @@
+---
+- name: "Step 58 - Reboot SGMs one by one"
+  hosts: sg
+  gather_facts: false
+  environment:
+    BASH_ENV: /etc/profile
+
+  tasks:
+
+    - name: "Timestamp / Step 58 - Reboot SGMs one by one"
+      include_tasks: ./include/print_datetime.yml
+      when: loglevel>=2
+
+  ### Validate if SMO is in good condition
+
+    - name: "Pause"
+      include_tasks: include/pause.yml
+
+    - name: "enable smo image auto-clone feature - save config"
+      shell: |
+        gclish -c "set smo image auto-clone state on"
+        gclish -c "save config"
+      changed_when: false
+      register: res
+
+    ### Loop through all SGMs "not upgraded yet"
+    - name: "Get list of SGMs"
+      shell: asg stat -i all_ids
+      register: sgms
+      changed_when: false
+
+    - name: "Loop for SGMs reboot"
+      include_tasks: include/reboot_SGM.yml
+      loop: "{{ sgms.stdout_lines }}"
+
+    - name: "Wait for all Active"
+      shell: while [ $(asg stat -i sgm_info | grep -c Inactive) -ne 0 ]; do printf "."; sleep 10; done
+      changed_when: false
+      ignore_errors: true
+      ignore_unreachable: true
+      register: res
+
+    - name: "Restart DA on all SGMs"
+      shell: gexec -b "{{ item | trim }}" -g -c "DAClient stop; sleep 5; killall DAService; sleep 5; DAClient start"
+      loop: "{{ sgms.stdout_lines }}"
+      changed_when: false
+      ignore_errors: true
+
+    - name: "Timestamp / Step 58 - Reboot SGMs completed"
+      include_tasks: ./include/print_datetime.yml
+      when: loglevel>=2

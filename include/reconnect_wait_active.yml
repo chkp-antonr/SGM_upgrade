@@ -1,0 +1,25 @@
+- name: Establish new connection (in case of SMO switch)
+  wait_for_connection:
+    timeout: 600
+  ignore_unreachable: true
+  ignore_errors: true
+
+- name: "get SMO_IP"
+  shell: hostname -i
+  register: res
+  changed_when: false
+  ignore_unreachable: true
+  ignore_errors: true
+
+- name: "Debug / SMO_IP before waiting for all active (56-R8020-add_JHF.yml)"
+  debug:
+    msg: "{{ item | default('') }} {{ res.stdout }}"
+  ignore_errors: true
+  when: loglevel>0
+
+- name: "Wait for all Active"
+  shell: while [ $(asg stat -i sgm_info | grep -c Inactive) -ne 0 ]; do printf "."; sleep 10; done
+  changed_when: false
+  ignore_errors: true
+  ignore_unreachable: true
+  register: res

@@ -37,9 +37,7 @@
         # - cplic print -x
         # - g_all asg if
         # - g_all ips stat
-
-        # How to terminate?
-        # - asg perf -v -p
+        # - echo e | asg perf -p -v
 
     - name: "collect data in expert mode"
       shell: "printf '\n\n\n-=[ {{ item }} ]=-\n\n' >> {{ log }}; gclish -a -c \"{{ item }}\" >> {{ log }}"

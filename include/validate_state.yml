@@ -1,0 +1,11 @@
+# If the version indeed updated to the particular jumbo
+# License on the SGM
+# cplic print -x | grep 192 | wc -l
+# BGP neighbor states are established
+#
+# Number of the BGP prefixes received from the neighbors
+#
+# Cluster state of the SGM is ACTIVE
+#
+# Traffic is flowing on the SGM (this is visible in asg perf –v -p)
+# 

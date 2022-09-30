@@ -1,6 +1,6 @@
 ---
 - name: "-= Python repair =-"
-  gather_facts: no
+  gather_facts: false
   hosts: sg
   environment:
     BASH_ENV: /etc/profile
@@ -37,8 +37,8 @@
           /opt/CPsuite-R8*/fw1/Python/bin/python $*
         mode: 0755
 
-    - name:
-      raw: "/opt/CPsmo-R8*/bin/g_cp2blades /tmp/python /home/admin/python"
+    - name: "Clone /home/admin/python script"
+      shell: "/opt/CPsmo-R8*/bin/g_cp2blades /tmp/python /home/admin/python"
       changed_when: false
       ignore_errors: true
     #   register: res
@@ -67,13 +67,14 @@
         which clusterXL_admin
         which g_clusterXL_admin
       ignore_errors: true
+      changed_when: false
       register: res
 
-    - name: "Debug / "
+    - name: "Debug"
       debug:
         msg:
           - "stdout_lines"
-          - "{{ res.stdout_lines|default('') }}"
+          - "{{ res.stdout_lines | default('') }}"
           - "stderr_lines"
-          - "{{ res.stderr_lines|default('') }}"
-          - "{{ (ansible_env|default({})).PATH|default('') }}"
+          - "{{ res.stderr_lines | default('') }}"
+          - "{{ (ansible_env | default({})).PATH | default('') }}"
