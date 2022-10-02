@@ -18,7 +18,7 @@
   when: loglevel>0
 
 - name: "Wait for all Active"
-  shell: while [ $(asg stat -i sgm_info | grep -c Inactive) -ne 0 ]; do printf "."; sleep 10; done
+  shell: while [ $(asg stat -i sgm_info | grep -c Inactive) -ne 0 ]; do printf "."; sleep 15; done
   changed_when: false
   ignore_errors: true
   ignore_unreachable: true

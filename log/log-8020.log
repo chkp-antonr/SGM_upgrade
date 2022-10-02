@@ -1,0 +1,737 @@
+
+PLAY [-= Python repair =-] *****************************************************
+
+TASK [Waiting for MHO] *********************************************************
+ok: [172.23.23.29]
+
+TASK [Python checking] *********************************************************
+ok: [172.23.23.29]
+
+TASK [Python Path settings] ****************************************************
+changed: [172.23.23.29]
+
+TASK [Python Home settings] ****************************************************
+changed: [172.23.23.29]
+
+TASK [Create python bash script] ***********************************************
+changed: [172.23.23.29]
+
+TASK [Clone /home/admin/python script] *****************************************
+ok: [172.23.23.29]
+
+PLAY [Test new python] *********************************************************
+
+TASK [Check] *******************************************************************
+ok: [172.23.23.29]
+
+TASK [Debug] *******************************************************************
+ok: [172.23.23.29] => {
+    "msg": [
+        "stdout_lines",
+        [
+            "/opt/CPinfo-10/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/opt/CPshrd-R80.30/bin:/opt/CPshrd-R80.30/util:/opt/CPshrd-R80.30/web/Apache/bin:/opt/CPsuite-R80.30/fw1/bin:/opt/CPsuite-R80.30/fw1/jre/bin:/opt/CPsuite-R80.30/fw1/oracle_oi/sdk:/opt/CPshrd-R80.30/jre_32/bin:/opt/CPsuite-R80.30/fg1/bin:/opt/CPda/bin:/opt/CPsmo-R80.30/bin:/usr/lib/lb/bin:/opt/CPppak-R80.30/bin:/opt/DDR/bin:/opt/CPdiag-R80.30/bin:/opt/CPcvpn-R80.30/bin",
+            "/bin/clish",
+            "/opt/CPshrd-R80.30/bin/jq",
+            "/opt/CPsuite-R80.30/fw1/bin/clusterXL_admin",
+            "/opt/CPsmo-R80.30/bin/g_clusterXL_admin"
+        ],
+        "stderr_lines",
+        [],
+        ""
+    ]
+}
+
+PLAY [Step 56 - Install the required Take of the Jumbo Hotfix Accumulator R80.20] ***
+
+TASK [Timestamp / Start Step 56 - Install the required Take of the Jumbo Hotfix Accumulator] ***
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/include/print_datetime.yml for 172.23.23.29
+
+TASK [get date] ****************************************************************
+ok: [172.23.23.29]
+
+TASK [print datetime] **********************************************************
+ok: [172.23.23.29] => {
+    "msg": "2022-10-02 09:07:53"
+}
+
+TASK [remove usermode coredumps if exist] **************************************
+ok: [172.23.23.29]
+
+TASK [core_dump_verifier -v] ***************************************************
+fatal: [172.23.23.29]: FAILED! => {"changed": false, "cmd": "core_dump_verifier -v", "delta": "0:00:00.264738", "end": "2022-10-02 09:07:56.158833", "msg": "non-zero return code", "rc": 1, "start": "2022-10-02 09:07:55.894095", "stderr": "", "stderr_lines": [], "stdout": "Checking for process core dumps:\n-*- 1 blade: 1_01 -*-\n* No core dumps found *\n-*- 1 blade: 1_02 -*-\n2022-10-02 08:58:16.68509934 /var/log/dump/usermode/cpviewd.52321.core.gz\n\nChecking for kernel core dumps:\n-*- 2 blades: 1_01 1_02 -*-\n* No core dumps found *", "stdout_lines": ["Checking for process core dumps:", "-*- 1 blade: 1_01 -*-", "* No core dumps found *", "-*- 1 blade: 1_02 -*-", "2022-10-02 08:58:16.68509934 /var/log/dump/usermode/cpviewd.52321.core.gz", "", "Checking for kernel core dumps:", "-*- 2 blades: 1_01 1_02 -*-", "* No core dumps found *"]}
+...ignoring
+
+TASK [Debug / coredumps] *******************************************************
+ok: [172.23.23.29] => {
+    "msg": [
+        "Checking for process core dumps:",
+        "-*- 1 blade: 1_01 -*-",
+        "* No core dumps found *",
+        "-*- 1 blade: 1_02 -*-",
+        "2022-10-02 08:58:16.68509934 /var/log/dump/usermode/cpviewd.52321.core.gz",
+        "",
+        "Checking for kernel core dumps:",
+        "-*- 2 blades: 1_01 1_02 -*-",
+        "* No core dumps found *"
+    ]
+}
+
+TASK [Create local repo dir] ***************************************************
+changed: [172.23.23.29]
+
+TASK [copy hotfix to the smo from file distribution server] ********************
+changed: [172.23.23.29]
+
+TASK [Check if already imported] ***********************************************
+fatal: [172.23.23.29]: FAILED! => {"changed": false, "cmd": "set -o pipefail && da_cli package_info package=\"Check_Point_R80_30SP_JHF_MAIN_Bundle_T101_FULL.tgz\" | grep -c \"displayName\"\n", "delta": "0:00:00.145691", "end": "2022-10-02 09:08:24.076418", "msg": "non-zero return code", "rc": 1, "start": "2022-10-02 09:08:23.930727", "stderr": "", "stderr_lines": [], "stdout": "0", "stdout_lines": ["0"]}
+...ignoring
+
+TASK [Import] ******************************************************************
+ok: [172.23.23.29]
+
+TASK [Debug / Imported (56-R8020-add_JHF.yml)] *********************************
+ok: [172.23.23.29] => {
+    "msg": [
+        "{",
+        "   \"Action ID\" : \"1\",",
+        "   \"Message\" : \"import command delivered to service.\",",
+        "   \"Package\" : \"Check_Point_R80_30SP_JHF_MAIN_Bundle_T101_FULL.tgz\"",
+        "}"
+    ]
+}
+
+TASK [disable smo image auto-clone feature - save config] **********************
+ok: [172.23.23.29]
+
+TASK [Debug / smo image autoclone (56-R8020-add_JHF.yml)] **********************
+ok: [172.23.23.29] => {
+    "msg": [
+        "1_01:",
+        "Image auto-clone state is off",
+        "",
+        "1_02:",
+        "Image auto-clone state is off",
+        "",
+        "1_01:",
+        "success",
+        "",
+        "1_02:",
+        "success"
+    ]
+}
+
+TASK [verify package] **********************************************************
+FAILED - RETRYING: [172.23.23.29]: verify package (60 retries left).
+FAILED - RETRYING: [172.23.23.29]: verify package (59 retries left).
+FAILED - RETRYING: [172.23.23.29]: verify package (58 retries left).
+ok: [172.23.23.29]
+
+TASK [set Action ID] ***********************************************************
+ok: [172.23.23.29]
+
+TASK [Debug / Action ID for Verify] ********************************************
+ok: [172.23.23.29] => {
+    "msg": "Action ID = 5"
+}
+
+TASK [Verify package progress] *************************************************
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/include/da_progress.yml for 172.23.23.29
+
+TASK [Set the retry count] *****************************************************
+ok: [172.23.23.29]
+
+TASK [package progress] ********************************************************
+fatal: [172.23.23.29]: FAILED! => {"changed": false, "cmd": "sleep \"1\"; da_cli get_status_of_action actionID=\"5\" | jq '.Progress + \"% \" + .Status'", "delta": "0:00:01.286415", "end": "2022-10-02 09:09:07.638005", "failed_when_result": true, "msg": "", "rc": 0, "start": "2022-10-02 09:09:06.351590", "stderr": "", "stderr_lines": [], "stdout": "\"1% in progress\"", "stdout_lines": ["\"1% in progress\""]}
+
+TASK [resque fail retries] *****************************************************
+skipping: [172.23.23.29]
+
+TASK [resque unreachable - goes to reboot] *************************************
+skipping: [172.23.23.29]
+
+TASK [rescue progress] *********************************************************
+ok: [172.23.23.29] => {
+    "msg": [
+        "0 of 50 \"1% in progress\""
+    ]
+}
+
+TASK [include_tasks] ***********************************************************
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/./include/da_progress.yml for 172.23.23.29
+
+TASK [Set the retry count] *****************************************************
+ok: [172.23.23.29]
+
+TASK [package progress] ********************************************************
+ok: [172.23.23.29]
+
+TASK [Debug / verify package completed (56-R8020-add_JHF.yml)] *****************
+ok: [172.23.23.29] => {
+    "msg": [
+        "\"100% success\""
+    ]
+}
+
+TASK [Install package] *********************************************************
+ok: [172.23.23.29]
+
+TASK [set Action ID] ***********************************************************
+ok: [172.23.23.29]
+
+TASK [Debug / Action ID for Install (56-R8020-add_JHF.yml)] ********************
+ok: [172.23.23.29] => {
+    "msg": [
+        "Expect retries until completed and reboot.",
+        "Progress can be tracked in other terminal with",
+        "da_cli get_status_of_action actionID=6"
+    ]
+}
+
+TASK [Install package progress] ************************************************
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/include/da_progress.yml for 172.23.23.29
+
+TASK [Set the retry count] *****************************************************
+ok: [172.23.23.29]
+
+TASK [package progress] ********************************************************
+fatal: [172.23.23.29]: FAILED! => {"changed": false, "cmd": "sleep \"60\"; da_cli get_status_of_action actionID=\"6\" | jq '.Progress + \"% \" + .Status'", "delta": "0:01:00.288081", "end": "2022-10-02 09:10:13.019642", "failed_when_result": true, "msg": "", "rc": 0, "start": "2022-10-02 09:09:12.731561", "stderr": "", "stderr_lines": [], "stdout": "\"15% in progress\"", "stdout_lines": ["\"15% in progress\""]}
+
+TASK [resque fail retries] *****************************************************
+skipping: [172.23.23.29]
+
+TASK [resque unreachable - goes to reboot] *************************************
+skipping: [172.23.23.29]
+
+TASK [rescue progress] *********************************************************
+ok: [172.23.23.29] => {
+    "msg": [
+        "2 of 100 \"15% in progress\""
+    ]
+}
+
+TASK [include_tasks] ***********************************************************
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/./include/da_progress.yml for 172.23.23.29
+
+TASK [Set the retry count] *****************************************************
+ok: [172.23.23.29]
+
+TASK [package progress] ********************************************************
+fatal: [172.23.23.29]: FAILED! => {"changed": false, "cmd": "sleep \"60\"; da_cli get_status_of_action actionID=\"6\" | jq '.Progress + \"% \" + .Status'", "delta": "0:01:00.286458", "end": "2022-10-02 09:11:14.672839", "failed_when_result": true, "msg": "", "rc": 0, "start": "2022-10-02 09:10:14.386381", "stderr": "", "stderr_lines": [], "stdout": "\"15% in progress\"", "stdout_lines": ["\"15% in progress\""]}
+
+TASK [resque fail retries] *****************************************************
+skipping: [172.23.23.29]
+
+TASK [resque unreachable - goes to reboot] *************************************
+skipping: [172.23.23.29]
+
+TASK [rescue progress] *********************************************************
+ok: [172.23.23.29] => {
+    "msg": [
+        "3 of 100 \"15% in progress\""
+    ]
+}
+
+TASK [include_tasks] ***********************************************************
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/./include/da_progress.yml for 172.23.23.29
+
+TASK [Set the retry count] *****************************************************
+ok: [172.23.23.29]
+
+TASK [package progress] ********************************************************
+fatal: [172.23.23.29]: FAILED! => {"changed": false, "cmd": "sleep \"60\"; da_cli get_status_of_action actionID=\"6\" | jq '.Progress + \"% \" + .Status'", "delta": "0:01:00.286209", "end": "2022-10-02 09:12:16.329321", "failed_when_result": true, "msg": "", "rc": 0, "start": "2022-10-02 09:11:16.043112", "stderr": "", "stderr_lines": [], "stdout": "\"32% in progress\"", "stdout_lines": ["\"32% in progress\""]}
+
+TASK [resque fail retries] *****************************************************
+skipping: [172.23.23.29]
+
+TASK [resque unreachable - goes to reboot] *************************************
+skipping: [172.23.23.29]
+
+TASK [rescue progress] *********************************************************
+ok: [172.23.23.29] => {
+    "msg": [
+        "4 of 100 \"32% in progress\""
+    ]
+}
+
+TASK [include_tasks] ***********************************************************
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/./include/da_progress.yml for 172.23.23.29
+
+TASK [Set the retry count] *****************************************************
+ok: [172.23.23.29]
+
+TASK [package progress] ********************************************************
+fatal: [172.23.23.29]: FAILED! => {"changed": false, "cmd": "sleep \"60\"; da_cli get_status_of_action actionID=\"6\" | jq '.Progress + \"% \" + .Status'", "delta": "0:01:00.285445", "end": "2022-10-02 09:13:17.925830", "failed_when_result": true, "msg": "", "rc": 0, "start": "2022-10-02 09:12:17.640385", "stderr": "", "stderr_lines": [], "stdout": "\"32% in progress\"", "stdout_lines": ["\"32% in progress\""]}
+
+TASK [resque fail retries] *****************************************************
+skipping: [172.23.23.29]
+
+TASK [resque unreachable - goes to reboot] *************************************
+skipping: [172.23.23.29]
+
+TASK [rescue progress] *********************************************************
+ok: [172.23.23.29] => {
+    "msg": [
+        "5 of 100 \"32% in progress\""
+    ]
+}
+
+TASK [include_tasks] ***********************************************************
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/./include/da_progress.yml for 172.23.23.29
+
+TASK [Set the retry count] *****************************************************
+ok: [172.23.23.29]
+
+TASK [package progress] ********************************************************
+fatal: [172.23.23.29]: FAILED! => {"changed": false, "cmd": "sleep \"60\"; da_cli get_status_of_action actionID=\"6\" | jq '.Progress + \"% \" + .Status'", "delta": "0:01:00.285357", "end": "2022-10-02 09:14:19.580825", "failed_when_result": true, "msg": "", "rc": 0, "start": "2022-10-02 09:13:19.295468", "stderr": "", "stderr_lines": [], "stdout": "\"32% in progress\"", "stdout_lines": ["\"32% in progress\""]}
+
+TASK [resque fail retries] *****************************************************
+skipping: [172.23.23.29]
+
+TASK [resque unreachable - goes to reboot] *************************************
+skipping: [172.23.23.29]
+
+TASK [rescue progress] *********************************************************
+ok: [172.23.23.29] => {
+    "msg": [
+        "6 of 100 \"32% in progress\""
+    ]
+}
+
+TASK [include_tasks] ***********************************************************
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/./include/da_progress.yml for 172.23.23.29
+
+TASK [Set the retry count] *****************************************************
+ok: [172.23.23.29]
+
+TASK [package progress] ********************************************************
+fatal: [172.23.23.29]: FAILED! => {"changed": false, "cmd": "sleep \"60\"; da_cli get_status_of_action actionID=\"6\" | jq '.Progress + \"% \" + .Status'", "delta": "0:01:00.285921", "end": "2022-10-02 09:15:21.294678", "failed_when_result": true, "msg": "", "rc": 0, "start": "2022-10-02 09:14:21.008757", "stderr": "", "stderr_lines": [], "stdout": "\"32% in progress\"", "stdout_lines": ["\"32% in progress\""]}
+
+TASK [resque fail retries] *****************************************************
+skipping: [172.23.23.29]
+
+TASK [resque unreachable - goes to reboot] *************************************
+skipping: [172.23.23.29]
+
+TASK [rescue progress] *********************************************************
+ok: [172.23.23.29] => {
+    "msg": [
+        "7 of 100 \"32% in progress\""
+    ]
+}
+
+TASK [include_tasks] ***********************************************************
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/./include/da_progress.yml for 172.23.23.29
+
+TASK [Set the retry count] *****************************************************
+ok: [172.23.23.29]
+
+TASK [package progress] ********************************************************
+fatal: [172.23.23.29]: FAILED! => {"changed": false, "cmd": "sleep \"60\"; da_cli get_status_of_action actionID=\"6\" | jq '.Progress + \"% \" + .Status'", "delta": "0:01:00.284891", "end": "2022-10-02 09:16:22.909334", "failed_when_result": true, "msg": "", "rc": 0, "start": "2022-10-02 09:15:22.624443", "stderr": "", "stderr_lines": [], "stdout": "\"32% in progress\"", "stdout_lines": ["\"32% in progress\""]}
+
+TASK [resque fail retries] *****************************************************
+skipping: [172.23.23.29]
+
+TASK [resque unreachable - goes to reboot] *************************************
+skipping: [172.23.23.29]
+
+TASK [rescue progress] *********************************************************
+ok: [172.23.23.29] => {
+    "msg": [
+        "8 of 100 \"32% in progress\""
+    ]
+}
+
+TASK [include_tasks] ***********************************************************
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/./include/da_progress.yml for 172.23.23.29
+
+TASK [Set the retry count] *****************************************************
+ok: [172.23.23.29]
+
+TASK [package progress] ********************************************************
+fatal: [172.23.23.29]: FAILED! => {"changed": false, "cmd": "sleep \"60\"; da_cli get_status_of_action actionID=\"6\" | jq '.Progress + \"% \" + .Status'", "delta": "0:01:00.286024", "end": "2022-10-02 09:17:24.691299", "failed_when_result": true, "msg": "", "rc": 0, "start": "2022-10-02 09:16:24.405275", "stderr": "", "stderr_lines": [], "stdout": "\"32% in progress\"", "stdout_lines": ["\"32% in progress\""]}
+
+TASK [resque fail retries] *****************************************************
+skipping: [172.23.23.29]
+
+TASK [resque unreachable - goes to reboot] *************************************
+skipping: [172.23.23.29]
+
+TASK [rescue progress] *********************************************************
+ok: [172.23.23.29] => {
+    "msg": [
+        "9 of 100 \"32% in progress\""
+    ]
+}
+
+TASK [include_tasks] ***********************************************************
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/./include/da_progress.yml for 172.23.23.29
+
+TASK [Set the retry count] *****************************************************
+ok: [172.23.23.29]
+
+TASK [package progress] ********************************************************
+fatal: [172.23.23.29]: FAILED! => {"changed": false, "cmd": "sleep \"60\"; da_cli get_status_of_action actionID=\"6\" | jq '.Progress + \"% \" + .Status'", "delta": "0:01:00.285098", "end": "2022-10-02 09:18:26.326268", "failed_when_result": true, "msg": "", "rc": 0, "start": "2022-10-02 09:17:26.041170", "stderr": "", "stderr_lines": [], "stdout": "\"32% in progress\"", "stdout_lines": ["\"32% in progress\""]}
+
+TASK [resque fail retries] *****************************************************
+skipping: [172.23.23.29]
+
+TASK [resque unreachable - goes to reboot] *************************************
+skipping: [172.23.23.29]
+
+TASK [rescue progress] *********************************************************
+ok: [172.23.23.29] => {
+    "msg": [
+        "10 of 100 \"32% in progress\""
+    ]
+}
+
+TASK [include_tasks] ***********************************************************
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/./include/da_progress.yml for 172.23.23.29
+
+TASK [Set the retry count] *****************************************************
+ok: [172.23.23.29]
+
+TASK [package progress] ********************************************************
+fatal: [172.23.23.29]: FAILED! => {"changed": false, "cmd": "sleep \"60\"; da_cli get_status_of_action actionID=\"6\" | jq '.Progress + \"% \" + .Status'", "delta": "0:01:00.288637", "end": "2022-10-02 09:19:28.009022", "failed_when_result": true, "msg": "", "rc": 0, "start": "2022-10-02 09:18:27.720385", "stderr": "", "stderr_lines": [], "stdout": "\"32% in progress\"", "stdout_lines": ["\"32% in progress\""]}
+
+TASK [resque fail retries] *****************************************************
+skipping: [172.23.23.29]
+
+TASK [resque unreachable - goes to reboot] *************************************
+skipping: [172.23.23.29]
+
+TASK [rescue progress] *********************************************************
+ok: [172.23.23.29] => {
+    "msg": [
+        "11 of 100 \"32% in progress\""
+    ]
+}
+
+TASK [include_tasks] ***********************************************************
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/./include/da_progress.yml for 172.23.23.29
+
+TASK [Set the retry count] *****************************************************
+ok: [172.23.23.29]
+
+TASK [package progress] ********************************************************
+fatal: [172.23.23.29]: FAILED! => {"changed": false, "cmd": "sleep \"60\"; da_cli get_status_of_action actionID=\"6\" | jq '.Progress + \"% \" + .Status'", "delta": "0:01:00.285597", "end": "2022-10-02 09:20:29.649667", "failed_when_result": true, "msg": "", "rc": 0, "start": "2022-10-02 09:19:29.364070", "stderr": "", "stderr_lines": [], "stdout": "\"40% in progress\"", "stdout_lines": ["\"40% in progress\""]}
+
+TASK [resque fail retries] *****************************************************
+skipping: [172.23.23.29]
+
+TASK [resque unreachable - goes to reboot] *************************************
+skipping: [172.23.23.29]
+
+TASK [rescue progress] *********************************************************
+ok: [172.23.23.29] => {
+    "msg": [
+        "12 of 100 \"40% in progress\""
+    ]
+}
+
+TASK [include_tasks] ***********************************************************
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/./include/da_progress.yml for 172.23.23.29
+
+TASK [Set the retry count] *****************************************************
+ok: [172.23.23.29]
+
+TASK [package progress] ********************************************************
+fatal: [172.23.23.29]: FAILED! => {"changed": false, "cmd": "sleep \"60\"; da_cli get_status_of_action actionID=\"6\" | jq '.Progress + \"% \" + .Status'", "delta": "0:01:00.299973", "end": "2022-10-02 09:21:31.323026", "failed_when_result": true, "msg": "", "rc": 0, "start": "2022-10-02 09:20:31.023053", "stderr": "", "stderr_lines": [], "stdout": "\"77% in progress\"", "stdout_lines": ["\"77% in progress\""]}
+
+TASK [resque fail retries] *****************************************************
+skipping: [172.23.23.29]
+
+TASK [resque unreachable - goes to reboot] *************************************
+skipping: [172.23.23.29]
+
+TASK [rescue progress] *********************************************************
+ok: [172.23.23.29] => {
+    "msg": [
+        "13 of 100 \"77% in progress\""
+    ]
+}
+
+TASK [include_tasks] ***********************************************************
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/./include/da_progress.yml for 172.23.23.29
+
+TASK [Set the retry count] *****************************************************
+ok: [172.23.23.29]
+
+TASK [package progress] ********************************************************
+fatal: [172.23.23.29]: FAILED! => {"changed": false, "cmd": "sleep \"60\"; da_cli get_status_of_action actionID=\"6\" | jq '.Progress + \"% \" + .Status'", "delta": "0:01:00.291514", "end": "2022-10-02 09:22:33.283101", "failed_when_result": true, "msg": "", "rc": 0, "start": "2022-10-02 09:21:32.991587", "stderr": "", "stderr_lines": [], "stdout": "\"83% in progress\"", "stdout_lines": ["\"83% in progress\""]}
+
+TASK [resque fail retries] *****************************************************
+skipping: [172.23.23.29]
+
+TASK [resque unreachable - goes to reboot] *************************************
+skipping: [172.23.23.29]
+
+TASK [rescue progress] *********************************************************
+ok: [172.23.23.29] => {
+    "msg": [
+        "14 of 100 \"83% in progress\""
+    ]
+}
+
+TASK [include_tasks] ***********************************************************
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/./include/da_progress.yml for 172.23.23.29
+
+TASK [Set the retry count] *****************************************************
+ok: [172.23.23.29]
+
+TASK [package progress] ********************************************************
+fatal: [172.23.23.29]: FAILED! => {"changed": false, "cmd": "sleep \"60\"; da_cli get_status_of_action actionID=\"6\" | jq '.Progress + \"% \" + .Status'", "delta": "0:01:00.292220", "end": "2022-10-02 09:23:34.968596", "failed_when_result": true, "msg": "", "rc": 0, "start": "2022-10-02 09:22:34.676376", "stderr": "", "stderr_lines": [], "stdout": "\"83% in progress\"", "stdout_lines": ["\"83% in progress\""]}
+
+TASK [resque fail retries] *****************************************************
+skipping: [172.23.23.29]
+
+TASK [resque unreachable - goes to reboot] *************************************
+skipping: [172.23.23.29]
+
+TASK [rescue progress] *********************************************************
+ok: [172.23.23.29] => {
+    "msg": [
+        "15 of 100 \"83% in progress\""
+    ]
+}
+
+TASK [include_tasks] ***********************************************************
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/./include/da_progress.yml for 172.23.23.29
+
+TASK [Set the retry count] *****************************************************
+ok: [172.23.23.29]
+
+TASK [package progress] ********************************************************
+fatal: [172.23.23.29]: FAILED! => {"changed": false, "cmd": "sleep \"60\"; da_cli get_status_of_action actionID=\"6\" | jq '.Progress + \"% \" + .Status'", "delta": "0:01:00.292898", "end": "2022-10-02 09:24:36.697436", "failed_when_result": true, "msg": "", "rc": 0, "start": "2022-10-02 09:23:36.404538", "stderr": "", "stderr_lines": [], "stdout": "\"88% in progress\"", "stdout_lines": ["\"88% in progress\""]}
+
+TASK [resque fail retries] *****************************************************
+skipping: [172.23.23.29]
+
+TASK [resque unreachable - goes to reboot] *************************************
+skipping: [172.23.23.29]
+
+TASK [rescue progress] *********************************************************
+ok: [172.23.23.29] => {
+    "msg": [
+        "16 of 100 \"88% in progress\""
+    ]
+}
+
+TASK [include_tasks] ***********************************************************
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/./include/da_progress.yml for 172.23.23.29
+
+TASK [Set the retry count] *****************************************************
+ok: [172.23.23.29]
+
+TASK [package progress] ********************************************************
+fatal: [172.23.23.29]: UNREACHABLE! => {"changed": false, "msg": "Failed to connect to the host via ssh: Shared connection to 172.23.23.29 closed.", "skip_reason": "Host 172.23.23.29 is unreachable", "unreachable": true}
+
+TASK [Debug / Going to reboot (56-R8020-add_JHF.yml)] **************************
+ok: [172.23.23.29] => {
+    "msg": {
+        "changed": false,
+        "msg": "Failed to connect to the host via ssh: Shared connection to 172.23.23.29 closed.",
+        "skip_reason": "Host 172.23.23.29 is unreachable",
+        "unreachable": true
+    }
+}
+
+TASK [Timestamp / JHF installed, waiting for SMO reboot] ***********************
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/include/print_datetime.yml for 172.23.23.29
+
+TASK [get date] ****************************************************************
+ok: [172.23.23.29]
+
+TASK [print datetime] **********************************************************
+ok: [172.23.23.29] => {
+    "msg": "2022-10-02 09:24:49"
+}
+
+TASK [Wait for reboot completed (handle SMO switches)] *************************
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/include/reconnect_wait_active.yml for 172.23.23.29 => (item=1)
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/include/reconnect_wait_active.yml for 172.23.23.29 => (item=2)
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/include/reconnect_wait_active.yml for 172.23.23.29 => (item=3)
+
+TASK [Establish new connection (in case of SMO switch)] ************************
+ok: [172.23.23.29]
+
+TASK [get SMO_IP] **************************************************************
+ok: [172.23.23.29]
+
+TASK [Debug / SMO_IP before waiting for all active (56-R8020-add_JHF.yml)] *****
+ok: [172.23.23.29] => {
+    "msg": "1 192.0.2.2"
+}
+
+TASK [Wait for all Active] *****************************************************
+ok: [172.23.23.29]
+
+TASK [Establish new connection (in case of SMO switch)] ************************
+ok: [172.23.23.29]
+
+TASK [get SMO_IP] **************************************************************
+ok: [172.23.23.29]
+
+TASK [Debug / SMO_IP before waiting for all active (56-R8020-add_JHF.yml)] *****
+ok: [172.23.23.29] => {
+    "msg": "2 192.0.2.1"
+}
+
+TASK [Wait for all Active] *****************************************************
+ok: [172.23.23.29]
+
+TASK [Establish new connection (in case of SMO switch)] ************************
+ok: [172.23.23.29]
+
+TASK [get SMO_IP] **************************************************************
+ok: [172.23.23.29]
+
+TASK [Debug / SMO_IP before waiting for all active (56-R8020-add_JHF.yml)] *****
+ok: [172.23.23.29] => {
+    "msg": "3 192.0.2.1"
+}
+
+TASK [Wait for all Active] *****************************************************
+ok: [172.23.23.29]
+
+TASK [Validate SGM state if OK to move forward] ********************************
+
+TASK [Timestamp / Step 56 (JHF R80.20SP install to SMO) completed] *************
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/include/print_datetime.yml for 172.23.23.29
+
+TASK [get date] ****************************************************************
+ok: [172.23.23.29]
+
+TASK [print datetime] **********************************************************
+ok: [172.23.23.29] => {
+    "msg": "2022-10-02 09:30:14"
+}
+
+PLAY [Step 58 - Reboot SGMs one by one] ****************************************
+
+TASK [Timestamp / Step 58 - Reboot SGMs one by one] ****************************
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/include/print_datetime.yml for 172.23.23.29
+
+TASK [get date] ****************************************************************
+ok: [172.23.23.29]
+
+TASK [print datetime] **********************************************************
+ok: [172.23.23.29] => {
+    "msg": "2022-10-02 09:30:15"
+}
+
+TASK [Pause] *******************************************************************
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/include/pause.yml for 172.23.23.29
+
+TASK [Wait for user input to continue] *****************************************
+Pausing for 30 seconds (output is hidden)
+(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)
+[Wait for user input to continue]
+Press ENTER to continue or Ctrl-C A to break (output is hidden):
+ok: [172.23.23.29]
+
+TASK [enable smo image auto-clone feature - save config] ***********************
+ok: [172.23.23.29]
+
+TASK [Get list of SGMs] ********************************************************
+ok: [172.23.23.29]
+
+TASK [Loop for SGMs reboot] ****************************************************
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/include/reboot_SGM.yml for 172.23.23.29 => (item=1_1              )
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/include/reboot_SGM.yml for 172.23.23.29 => (item=1_2              )
+
+TASK [Debug / SGM candidate to reboot (include/reboot_SGM.yml)] ****************
+ok: [172.23.23.29] => {
+    "msg": [
+        "Candidate to reboot SGM 1_1",
+        "Waiting for all SGMs active and running other checks"
+    ]
+}
+
+TASK [Clear skip_reboot flag] **************************************************
+ok: [172.23.23.29]
+
+TASK [Check if reboot is needed] ***********************************************
+ok: [172.23.23.29]
+
+TASK [Set skip_reboot to True if Take is already installed] ********************
+ok: [172.23.23.29]
+
+TASK [Wait for all Active] *****************************************************
+skipping: [172.23.23.29]
+
+TASK [Validate SGM state if OK to move forward] ********************************
+skipping: [172.23.23.29]
+
+TASK [Debug / SGM reboot is required (include/reboot_SGM.yml)] *****************
+skipping: [172.23.23.29]
+
+TASK [Pause] *******************************************************************
+skipping: [172.23.23.29]
+
+TASK [Reboot SGM] **************************************************************
+skipping: [172.23.23.29]
+
+TASK [Debug / SGM candidate to reboot (include/reboot_SGM.yml)] ****************
+ok: [172.23.23.29] => {
+    "msg": [
+        "Candidate to reboot SGM 1_2",
+        "Waiting for all SGMs active and running other checks"
+    ]
+}
+
+TASK [Clear skip_reboot flag] **************************************************
+ok: [172.23.23.29]
+
+TASK [Check if reboot is needed] ***********************************************
+ok: [172.23.23.29]
+
+TASK [Set skip_reboot to True if Take is already installed] ********************
+skipping: [172.23.23.29]
+
+TASK [Wait for all Active] *****************************************************
+ok: [172.23.23.29]
+
+TASK [Validate SGM state if OK to move forward] ********************************
+
+TASK [Debug / SGM reboot is required (include/reboot_SGM.yml)] *****************
+ok: [172.23.23.29] => {
+    "msg": [
+        "SGM 1_2               reboot is required. Ready?"
+    ]
+}
+
+TASK [Pause] *******************************************************************
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/include/pause.yml for 172.23.23.29
+
+TASK [Wait for user input to continue] *****************************************
+Pausing for 30 seconds (output is hidden)
+(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)
+[Wait for user input to continue]
+Press ENTER to continue or Ctrl-C A to break (output is hidden):
+ok: [172.23.23.29]
+
+TASK [Reboot SGM] **************************************************************
+ok: [172.23.23.29]
+
+TASK [Wait for all Active] *****************************************************
+ok: [172.23.23.29]
+
+TASK [Restart DA on all SGMs] **************************************************
+ok: [172.23.23.29] => (item=1_1              )
+ok: [172.23.23.29] => (item=1_2              )
+
+TASK [Timestamp / Step 58 - Reboot SGMs completed] *****************************
+included: /opt/Code/Ansible/SGM_R8020SP_upgrade/include/print_datetime.yml for 172.23.23.29
+
+TASK [get date] ****************************************************************
+ok: [172.23.23.29]
+
+TASK [print datetime] **********************************************************
+ok: [172.23.23.29] => {
+    "msg": "2022-10-02 09:40:50"
+}
+
+PLAY RECAP *********************************************************************
+172.23.23.29               : ok=129  changed=5    unreachable=1    failed=0    skipped=39   rescued=16   ignored=2   
+

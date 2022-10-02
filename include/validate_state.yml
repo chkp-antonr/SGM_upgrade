@@ -8,4 +8,4 @@
 # Cluster state of the SGM is ACTIVE
 #
 # Traffic is flowing on the SGM (this is visible in asg perf –v -p)
-# 
+#

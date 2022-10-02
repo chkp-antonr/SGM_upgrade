@@ -2,3 +2,4 @@
   ansible.builtin.pause:
     prompt: "Press ENTER to continue or Ctrl-C A to break"
     echo: false
+    seconds: "{{ pause_sec | default(30) }}"

@@ -20,12 +20,12 @@
       when: retry_count|int == max_retries
       # when: loglevel>=3
 
-    - name: "resque fail unreachable"
+    - name: "resque unreachable - goes to reboot"
       fail:
         msg:
-          - "unreachable"
+          - "unreachable, goes to reboot"
           - "{{ res_verify }}"
-      when: res_verify.unreachable | default(false) | bool
+      when: res_verify.unreachable | default(false) | bool == true
 
     - name: "rescue progress"
       debug:

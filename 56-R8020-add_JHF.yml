@@ -6,8 +6,6 @@
   gather_facts: false
   environment:
     BASH_ENV: /etc/profile
-  vars:
-    jhf: Check_Point_R80_30SP_JHF_MAIN_Bundle_T101_FULL.tgz
 
   tasks:
 

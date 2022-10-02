@@ -15,5 +15,5 @@
 [MHO]
 172.23.23.186 ansible_ssh_user=admin ansible_ssh_pass=zubur1 ansible_python_interpreter="/opt/CPsuite-R8*/fw1/Python/bin/python"
 
-[skyline]
-172.23.23.29 type=sg
+[test]
+10.202.1.2
