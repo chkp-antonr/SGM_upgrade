@@ -1,11 +1,94 @@
-# If the version indeed updated to the particular jumbo
-# License on the SGM
-# cplic print -x | grep 192 | wc -l
-# BGP neighbor states are established
-#
-# Number of the BGP prefixes received from the neighbors
-#
-# Cluster state of the SGM is ACTIVE
-#
-# Traffic is flowing on the SGM (this is visible in asg perf –v -p)
-#
+# Collect validation (include validation_collect.yml)
+# store as validation_after
+# show diff, pause for user action
+# fail by R on user input to trigger `resque` and repeat checks as `until` doesn't work with blocks and includes
+- name: "Validate and retry if needed"
+  block:
+
+    - name: "Collect validations"
+      include_tasks: validation_collect.yml
+      # vars:
+      #   sgm: "{{ item }}"
+
+    - name: "Store validation_after"
+      set_fact:
+        validation_after: "{{ validation }}"
+
+    - name: "Debug / Validation after"
+      debug:
+        msg:
+          - "{{ validation_after }}"
+      when: loglevel>=3
+
+    - name: "Clear Diff"
+      set_fact:
+        diff_ok: {}
+        diff_err: {}
+
+    - name: "Set Diff OK"
+      set_fact:
+        diff_ok:
+          "{{ diff_ok | combine((validation_before[item] == validation_after[item]) |
+          ternary({item: validation_before[item]},{})) }}"
+      loop: "{{ validation_before.keys() | sort }}"
+      ignore_errors: true
+
+    - name: "Set Diff Err"
+      set_fact:
+        diff_err:
+          "{{ diff_err | combine((validation_before[item] == validation_after[item]) |
+          ternary({},{item + ' before': validation_before[item], item + ' after ': validation_after[item]})) }}"
+      loop: "{{ validation_before.keys() | sort }}"
+      ignore_errors: true
+
+    # - name: "Debug / Diff"
+    #   debug:
+    #     msg: >
+    #       "{{ (validation_before[item] == validation_after[item]) |
+    #       ternary('OK ' + item | string, 'ERROR ' + item + ' ' + validation_after[item] | string + ' was ' + validation_before[item] | string) }}"
+    #   loop: "{{ validation_before.keys() | sort }}"
+    #   ignore_errors: true
+    #   when: loglevel>=3
+
+    - name: "Debug / Diff OK"
+      debug:
+        msg:
+          - "Validation OK"
+          - "{{ diff_ok }}"
+      when: loglevel>0
+
+    - name: "Debug / Diff Errors"
+      # skip if no errors
+      debug:
+        msg:
+          - "Validation ERROR"
+          - "{{ diff_err }}"
+      when:
+        - diff_err | length > 0
+        - loglevel>=0
+
+    # - name: "Pause"
+    #   include_tasks: pause.yml
+    #   register: response
+
+    - name: Wait for user input to continue
+      pause:
+        prompt: "Press ENTER to continue, R + Enter to retry validations, or Ctrl-C A to break"
+        echo: true
+      register: response
+      failed_when: response.user_input | default('') | upper is search('R')
+
+  rescue:
+
+    - include_tasks: validate_state.yml
+
+    # - debug:
+    #   loop: "{{ s.keys()|sort }}"
+
+    # - name: "Compare Before and After"
+    #   ansible.utils.fact_diff: # requires installation from galaxy
+    #     before: "{{ validation_before }}"
+    #     after: "{{ validation_after }}"
+
+    # interim_string: "{% for item in myitems %}with-{{item}}X {% endfor %}"
+    # result_list: "{{ interim_string.split() }}"

@@ -1,0 +1,75 @@
+- name: "Get lics"
+  shell: |
+    set -o pipefail &&
+    gexec -b "{{ sgm | trim }}" -g -c "cplic print -x" | grep 192 | wc -l
+  changed_when: false
+  ignore_errors: true # error if no Tale yet, ignore this
+  register: res
+
+- name: "Set licenses"
+  set_fact:
+    validation: { 'lics_count': "{{ res.stdout }}" }
+
+- name: "Get take"
+  shell: |
+    set -o pipefail &&
+    gexec -b "{{ sgm | trim }}" -g -c "cpinfo -y all" | grep -A 2 SMO | grep Take | awk '{ printf $3 }'
+  changed_when: false
+  ignore_errors: true
+  register: res
+
+- name: "Set take"
+  set_fact:
+    validation: "{{ validation | combine({ 'take': res.stdout }) }}"
+
+- name: "Get show bgp peers"
+  shell: |
+    set -o pipefail &&
+    gexec -b "{{ sgm | trim }}" -g -c "show bgp peers" | egrep "Established|Idle" | cut -d ' ' -f 1
+#    gexec -b "{{ sgm | trim }}" -g -c "cat /home/admin/show_bgp_peers-{{ sgm | trim }}.txt" | egrep "Established|Idle" | cut -d ' ' -f 1
+  changed_when: false
+  ignore_errors: true
+  register: res
+
+- name: "Set show bgp peers"
+  set_fact:
+#    validation: "{{ validation | combine({ 'bgp_peers_count': res.stdout_lines | length }) }}"
+    validation: "{{ validation | combine({ 'bgp_peers': res.stdout_lines | list, 'bgp_peers_count': res.stdout_lines | length }) }}"
+
+- name: "Get show bgp peers advertise"
+  shell: |
+    set -o pipefail &&
+    gexec -b "{{ sgm | trim }}" -g -c "show bgp peers advertise" | grep EBGP | wc -l
+#    gexec -b "{{ sgm | trim }}" -g -c "cat /home/admin/show_bgp_peers_advertise-{{ sgm | trim }}.txt" | grep EBGP | wc -l
+  changed_when: false
+  ignore_errors: true
+  register: res
+
+- name: "Set show bgp peers advertise"
+  set_fact:
+    validation: "{{ validation | combine({ 'bgp_peers_advertise_count': res.stdout }) }}"
+
+- name: "Get show bgp peers received"
+  shell: |
+    set -o pipefail &&
+    gexec -b "{{ sgm | trim }}" -g -c "show bgp peers received" | grep EBGP | wc -l
+#    gexec -b "{{ sgm | trim }}" -g -c "cat /home/admin/show_bgp_peers_received-{{ sgm | trim }}.txt" | grep EBGP | wc -l
+  changed_when: false
+  ignore_errors: true
+  register: res
+
+- name: "Set show bgp peers received"
+  set_fact:
+    validation: "{{ validation | combine({ 'bgp_peers_received_count': res.stdout }) }}"
+
+- name: "Get active_ids"
+  shell: |
+    set -o pipefail &&
+    gexec -b "{{ sgm | trim }}" -c "asg stat -i active_ids" | wc -l
+  changed_when: false
+  ignore_errors: true
+  register: res
+
+- name: "Set active_ids"
+  set_fact:
+    validation: "{{ validation | combine({ 'active_ids_count': res.stdout }) }}"

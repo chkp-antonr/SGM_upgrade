@@ -7,7 +7,10 @@ ansible_python_interpreter: "/home/admin/python"
 ansible_ssh_transfer_method: piped
 ansible_user: ansible
 wait_for_reboot_timeout: 3600
+
 loglevel: 3 # 0 - silent; 1 - normal; 2 - print timestamps and some more; 3 - max
+pause_sec: 10 # default seconds for the pause module
+pause_prompt: false # true - wait for user response; false - timeout of pause_sec
 
 # credentials
 default_admin_user: admin # z..1

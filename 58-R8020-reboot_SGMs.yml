@@ -13,11 +13,13 @@
 
   ### Validate if SMO is in good condition
 
-    - name: "Pause"
+    - name: "Pause before upgrading other SGMs (if SMO is in good condition)"
       include_tasks: include/pause.yml
 
     - name: "enable smo image auto-clone feature - save config"
       shell: |
+        gclish -c "lock database override"
+        gclish -c "set config-lock on override"
         gclish -c "set smo image auto-clone state on"
         gclish -c "save config"
       changed_when: false
@@ -32,6 +34,8 @@
     - name: "Loop for SGMs reboot"
       include_tasks: include/reboot_SGM.yml
       loop: "{{ sgms.stdout_lines }}"
+      loop_control:
+        loop_var: item_sgm
 
     - name: "Wait for all Active"
       shell: while [ $(asg stat -i sgm_info | grep -c Inactive) -ne 0 ]; do printf "."; sleep 10; done
@@ -46,6 +50,19 @@
       changed_when: false
       ignore_errors: true
 
+    - name: "Wait for all Active"
+      shell: cphaprob stat
+      changed_when: false
+      register: res
+
     - name: "Timestamp / Step 58 - Reboot SGMs completed"
       include_tasks: ./include/print_datetime.yml
+      when: loglevel>=2
+
+    - name: "Debug / Final status (58-R8020-reboot_SGMs.yml)"
+      debug:
+        msg:
+          - "Upgrade completed"
+          - "{{ res.stdout_lines }}"
+          - "Have a nice day!"
       when: loglevel>=2

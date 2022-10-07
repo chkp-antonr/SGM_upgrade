@@ -1,5 +1,13 @@
+- name: Wait for timout to continue
+  ansible.builtin.pause:
+    prompt: "Press Ctrl-C A to break or Ctrl-C C to continue immediately"
+    seconds: "{{ pause_sec | default(5) }}"
+  register: response
+  when: not pause_prompt
+
 - name: Wait for user input to continue
   ansible.builtin.pause:
     prompt: "Press ENTER to continue or Ctrl-C A to break"
-    echo: false
-    seconds: "{{ pause_sec | default(30) }}"
+    echo: true
+  register: response
+  when: pause_prompt

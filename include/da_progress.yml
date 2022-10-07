@@ -25,7 +25,7 @@
         msg:
           - "unreachable, goes to reboot"
           - "{{ res_verify }}"
-      when: res_verify.unreachable | default(false) | bool == true
+      when: res_verify.unreachable | default(false) | bool
 
     - name: "rescue progress"
       debug:

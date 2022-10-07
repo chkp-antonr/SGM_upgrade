@@ -3,8 +3,14 @@
 - name: "50 Fix python"
   import_playbook: 50-pythonwo.yml
 
+- name: "51 log state before upgarde"
+  import_playbook: 51-R8020-pre_checks-log.yml
+
 - name: "56 Install R80.20 JHF on SMO"
   import_playbook: 56-R8020-add_JHF.yml
 
 - name: "58 reboot SGMs"
   import_playbook: 58-R8020-reboot_SGMs.yml
+
+# - name: "51 log state before upgarde"
+#   import_playbook: 51-R8020-pre_checks-log.yml

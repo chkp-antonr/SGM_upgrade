@@ -15,10 +15,11 @@
       include_tasks: ./include/print_datetime.yml
       when: loglevel>=2
 
-    - name: "Clear log"
-      file:
-        path: "{{ log }}"
-        state: absent
+    - name: "Rotate log"
+      delegate_to: localhost
+      command: mv "{{ log }}" "{{ log }}.prev"
+      args:
+        removes: "{{ log }}"
 
     - name: "collect data in expert mode"
       shell: "printf '\n\n\n-=[ {{ item }} ]=-\n\n' >> {{ log }}; {{ item }} >> {{ log }}"
@@ -27,33 +28,33 @@
       ignore_errors: true
       loop:
         - asg_serial_info
-        # - asg_ifconfig
-        # - asg_cores_util
-        # - asg diag print
-        # - asg diag verify
-        # - asg diag list
-        # - fw tab -t connections -s
-        # - fwaccel conns
-        # - cplic print -x
-        # - g_all asg if
-        # - g_all ips stat
-        # - echo e | asg perf -p -v
+        - asg_ifconfig
+        - asg_cores_util
+        - asg diag print
+        - asg diag verify
+        - asg diag list
+        - fw tab -t connections -s
+        - fwaccel conns
+        - cplic print -x
+        - g_all asg if
+        - g_all ips stat
+        - echo e | asg perf -p -v
 
-    - name: "collect data in expert mode"
+    - name: "collect data in clish"
       shell: "printf '\n\n\n-=[ {{ item }} ]=-\n\n' >> {{ log }}; gclish -a -c \"{{ item }}\" >> {{ log }}"
       register: res
       changed_when: false
       ignore_errors: true
       loop:
         - show uptime
-        # - show version all
-        # - show installer packages
-        # - show cluster state
-        # - show cluster members interfaces all
-        # - show bgp peers
-        # - show bgp peers advertise
-        # - show bgp peers received
-        # - show configuration
+        - show version all
+        - show installer packages
+        - show cluster state
+        - show cluster members interfaces all
+        - show bgp peers
+        - show bgp peers advertise
+        - show bgp peers received
+        - show configuration
 
     - name: "Fetch log to the local maching"
       fetch:

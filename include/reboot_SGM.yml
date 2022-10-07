@@ -1,7 +1,7 @@
 - name: "Debug / SGM candidate to reboot (include/reboot_SGM.yml)"
   debug:
     msg:
-      - "Candidate to reboot SGM {{ item | trim }}"
+      - "Candidate to reboot SGM {{ item_sgm | trim }}"
       - "Waiting for all SGMs active and running other checks"
 
 - name: "Clear skip_reboot flag"
@@ -9,7 +9,7 @@
     skip_reboot: false
 
 - name: "Check if reboot is needed"
-  shell: gexec -b "{{ item | trim }}" -g -c "cpinfo -y all" | grep -A 2 SMO | grep Take | cut -d ':' -f2
+  shell: gexec -b "{{ item_sgm | trim }}" -g -c "cpinfo -y all" | grep -A 2 SMO | grep Take | cut -d ':' -f2
   changed_when: false
   ignore_errors: true
   register: res
@@ -22,6 +22,28 @@
 - name: "If need to reboot"
   block:
 
+    - name: "Timestamp / include/reboot_SGM.yml start"
+      include_tasks: print_datetime.yml
+      when: loglevel>=2
+
+    # pre-check validations
+    - name: "Store SMO SGM"
+      set_fact:
+        sgm: "{{ item_sgm | trim }}"
+
+    - name: "Collect validations"
+      include_tasks: validation_collect.yml
+
+    - name: "Store validation_before"
+      set_fact:
+        validation_before: "{{ validation }}"
+
+    - name: "Debug / Validation before"
+      debug:
+        msg:
+          - "{{ validation_before }}"
+      when: loglevel>=3
+
     - name: "Wait for all Active"
       shell: while [ $(asg stat -i sgm_info | grep -c Inactive) -ne 0 ]; do printf "."; sleep 10; done
       changed_when: false
@@ -29,22 +51,31 @@
       ignore_unreachable: true
       register: res
 
-  ### Validate if OK before each SMG reboot
-    - name: "Validate SGM state if OK to move forward"
-      include_tasks: validate_state.yml
-
     - name: "Debug / SGM reboot is required (include/reboot_SGM.yml)"
       debug:
         msg:
-          - "SGM {{ item }} reboot is required. Ready?"
+          - "SGM {{ item_sgm }} reboot is required. Ready?"
 
     - name: "Pause"
       include_tasks: pause.yml
 
     - name: "Reboot SGM"
-      # shell: gexec -b "{{ item }}" -c "echo reboot"; sleep 1
-      shell: gexec -b "{{ item }}" -c "reboot"; sleep 15
+      shell: gexec -b "{{ item_sgm }}" -c "reboot"; sleep 30
       changed_when: false
       ignore_errors: true
+
+    - name: "Wait for all Active"
+      shell: while [ $(asg stat -i sgm_info | grep -c Inactive) -ne 0 ]; do printf "."; sleep 10; done
+      changed_when: false
+      ignore_errors: true
+      ignore_unreachable: true
+      register: res
+
+    - name: "Timestamp / include/reboot_SGM.yml rebooted"
+      include_tasks: print_datetime.yml
+      when: loglevel>=2
+
+    - name: "Validate SGM state before moving forward"
+      include_tasks: validate_state.yml
 
   when: not skip_reboot

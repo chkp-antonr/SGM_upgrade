@@ -6,6 +6,8 @@
   gather_facts: false
   environment:
     BASH_ENV: /etc/profile
+  vars:
+    jhf: "{{ jhf_R80_20 }}"
 
   tasks:
 
@@ -87,15 +89,35 @@
       tags: import
 
 
-# pre-check (for example: BGP…)
+# pre-check validations
+    - name: "Get SMO local_id"
+      shell: set -o pipefail && asg stat -i local_id
+      changed_when: false
+      register: res
 
+    - name: "Store SMO SGM"
+      set_fact:
+        sgm: "{{ res.stdout | trim }}"
+
+    - name: "Collect validations"
+      include_tasks: include/validation_collect.yml
+
+    - name: "Store validation_before"
+      set_fact:
+        validation_before: "{{ validation }}"
+
+    - name: "Debug / Validation before"
+      debug:
+        msg:
+          - "{{ validation_before }}"
+      when: loglevel>=3
+
+# Install
     - name: "Install"
       block:
 
         - name: "disable smo image auto-clone feature - save config"
-          shell: |
-            gclish -c "set smo image auto-clone state off"
-            gclish -c "save config"
+          shell: gclish -s -c "set smo image auto-clone state off"
           changed_when: false
           register: res
 
@@ -183,15 +205,16 @@
 
     - name: "Wait for reboot completed (handle SMO switches)"
       include_tasks: include/reconnect_wait_active.yml
-      loop: "{{ range(1, 4, 1) | list }}"
+      loop: "{{ range(1, 5, 1) | list }}"
 
 ### Validate state
-    - name: "Validate SGM state if OK to move forward"
-      include_tasks: include/validate_state.yml
-
     - name: "Timestamp / Step 56 (JHF R80.20SP install to SMO) completed"
       include_tasks: include/print_datetime.yml
       when: loglevel>=2
+
+    - name: "Validate SGM state before moving forward"
+      include_tasks: include/validate_state.yml
+
 
         # - name: "Debug / "
         #   debug: msg="{{ res_exist.stdout }}"
